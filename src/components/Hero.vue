@@ -14,23 +14,3 @@ import MyProjects from './MyProjects.vue'
     <MyProjects />
   </div>
 </template>
-
-<style scoped>
-.socials {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  a {
-    margin: 0 16px;
-  }
-}
-
-.content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  width: 100%;
-}
-</style>

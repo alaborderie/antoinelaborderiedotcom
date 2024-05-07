@@ -9,41 +9,15 @@ import Avatar from './components/Avatar.vue'
     <h2>Antoine Laborderie</h2>
   </div>
 
-  <header>
+  <header class="m-4 grid gap-4 grid-cols-2">
     <Avatar />
+    <div class="flex flex-col justify-center">
+      <p>Need a website? A mobile app? Something to automate?</p>
+      <p>Contact me! We can build together the best solution for your business.</p>
+    </div>
   </header>
 
   <main>
     <Hero />
   </main>
 </template>
-
-<style scoped>
-.title {
-  grid-column: 1/3;
-  text-align: center;
-  margin-bottom: 2rem;
-
-  @media (min-width: 1024px) {
-    margin-bottom: 6rem;
-  }
-}
-
-header {
-  line-height: 1.5;
-  padding-bottom: 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-bottom: 0;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  main {
-    height: 100%;
-  }
-}
-</style>
