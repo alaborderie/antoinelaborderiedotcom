@@ -52,3 +52,11 @@ jobs:
         run: |
           docker tag antoinelaborderiedotcom ghcr.io/${{ github.repository_owner }}/antoinelaborderiedotcom:latest
           docker push ghcr.io/${{ github.repository_owner }}/antoinelaborderiedotcom:latest
+  rollout:
+    name: rollout
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    steps:
+      - uses: actions/checkout@v4
+      - name: ssh into the vps to kubectl rollout restart
+        run: sshpass -p "${{ secrets.VPS_SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_SSH_USER }}@${{ secrets.VPS_SSH_IP }} -p ${{ secrets.VPS_SSH_PORT }} 'sudo kubectl rollout restart deployment landing-website'
