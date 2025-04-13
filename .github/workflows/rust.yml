@@ -1,0 +1,54 @@
+name: rust
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build
+        run: cargo build --release
+  fmt:
+    name: fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: fmt
+        run: cargo fmt -- --check
+  clippy:
+    name: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: clippy
+        run: cargo clippy -- -D warnings
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: test
+        run: cargo test
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    needs: [build, fmt, clippy, test]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the docker image
+        run: docker build . --file Dockerfile --tag antoinelaborderiedotcom
+      - name: Login to registry
+        run:  docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.PAT_TOKEN }}
+      - name: Push the docker image
+        run: |
+          docker tag antoinelaborderiedotcom ghcr.io/${{ github.repository_owner }}/antoinelaborderiedotcom:latest
+          docker push ghcr.io/${{ github.repository_owner }}/antoinelaborderiedotcom:latest
