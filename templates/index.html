@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Antoine Laborderie - Freelance Web Developer</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Extra custom styles if needed */
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <!-- Navigation -->
+  <nav class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="flex justify-between h-16">
+        <div class="flex">
+          <a href="#" class="flex-shrink-0 flex items-center">
+            <img class="h-10 w-10 rounded-full" src="https://github.com/alaborderie.png" alt="Antoine Laborderie">
+          </a>
+          <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
+            <a href="#about" class="border-b-2 border-transparent hover:border-zinc-500 inline-flex items-center px-1 pt-1 text-sm font-medium">
+              About
+            </a>
+            <a href="#projects" class="border-b-2 border-transparent hover:border-zinc-500 inline-flex items-center px-1 pt-1 text-sm font-medium">
+              Projects
+            </a>
+            <a href="#contact" class="border-b-2 border-transparent hover:border-zinc-500 inline-flex items-center px-1 pt-1 text-sm font-medium">
+              Contact
+            </a>
+          </div>
+        </div>
+        <div class="flex">
+          <a href="https://github.com/alaborderie" class="flex-shrink-0 flex items-center p-2">
+            <img class="h-8" src="/static/logo/github.svg" alt="Github Logo">
+          </a>
+          <a href="https://www.linkedin.com/in/antoine-laborderie" class="flex-shrink-0 flex items-center p-2">
+            <img class="h-8" src="/static/logo/linkedin.png" alt="Linkedin Logo">
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="bg-zinc-700">
+    <div class="max-w-7xl mx-auto px-4 py-20 text-center">
+      <h1 class="text-4xl md:text-5xl font-extrabold text-white">Antoine Laborderie</h1>
+      <p class="mt-4 text-xl text-zinc-200">Freelance Web Developer dedicated to crafting modern web solutions</p>
+      <a href="#contact" class="mt-8 inline-block bg-white text-zinc-700 font-semibold px-6 py-3 rounded-full shadow-lg hover:bg-gray-100 transition">
+        Get In Touch
+      </a>
+    </div>
+  </header>
+
+  <!-- About Section -->
+  <section id="about" class="py-16">
+    <div class="max-w-4xl mx-auto px-4">
+      <h2 class="text-3xl font-bold text-center mb-6">About me</h2>
+      <div class="flex flex-col sm:flex-row items-center">
+        <img src="https://github.com/alaborderie.png" alt="Antoine Laborderie" class="w-32 h-32 rounded-full shadow-lg mb-4 sm:mb-0 sm:mr-8">
+        <p class="text-lg leading-relaxed">
+          I’m Antoine Laborderie, a freelance software developer passionate about crafting performant and clean web solutions. With a strong background in web development and a love for automation, I help businesses and startups in developing their solutions. My work includes building scalable back-end services and intuitive front-end experiences—always focusing on quality and efficiency.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Projects / Services Section -->
+  <section id="projects" class="bg-gray-100 py-16">
+    <div class="max-w-7xl mx-auto px-4">
+      <h2 class="text-3xl font-bold text-center mb-6">What I do</h2>
+      <div class="grid gap-8 grid-cols-1 md:grid-cols-3">
+        <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition duration-200">
+          <h3 class="text-xl font-semibold mb-2">Backend development</h3>
+          <p class="text-gray-600">Developing robust, scalable APIs and services using Rust, Go, and other modern tech stacks. I love experimenting with new languages or frameworks, and I am more of a jack of all trade because of that!</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition duration-200">
+          <h3 class="text-xl font-semibold mb-2">Full-stack applications</h3>
+          <p class="text-gray-600">Building clean and efficient web applications with a focus on both user experience and performance. My experience has taught me when I can or can't experiment with new features. Sometimes good old well-tested technologies are what you need.</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition duration-200">
+          <h3 class="text-xl font-semibold mb-2">Cloud or bare-metal infrastructure</h3>
+          <p class="text-gray-600">I design and deploy scalable infrastructure—whether in the cloud or on-prem—using tools like Terraform and CloudFormation. From new setups to seamless migrations, I’ll help you build reliable, automated environments tailored to your needs.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="py-16">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold mb-6">Let’s connect</h2>
+      <p class="text-lg mb-8">Looking for a freelance web developer to elevate your next project? Get in touch through one of the channels below.</p>
+      <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+        <a href="mailto:antoine.laborderie@gmail.com" class="bg-zinc-700 text-white px-8 py-3 rounded-full font-semibold shadow hover:bg-zinc-700 transition">
+          Email Me
+        </a>
+        <a href="https://www.linkedin.com/in/antoine-laborderie" target="_blank" class="bg-zinc-700 text-white px-8 py-3 rounded-full font-semibold shadow hover:bg-zinc-700 transition">
+          LinkedIn
+        </a>
+        <a href="https://github.com/alaborderie" target="_blank" class="bg-zinc-700 text-white px-8 py-3 rounded-full font-semibold shadow hover:bg-zinc-700 transition">
+          GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-white py-6 shadow-inner">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+      <p class="text-gray-600">&copy; 2025 Antoine Laborderie. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>
