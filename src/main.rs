@@ -34,6 +34,16 @@ struct ConceptTemplate {
     is_french: bool,
 }
 
+#[derive(Template)]
+#[template(path = "concept-spatial.html")]
+struct SpatialTemplate {
+    lang: &'static str,
+    title: &'static str,
+    description: &'static str,
+    canonical: &'static str,
+    is_french: bool,
+}
+
 fn app() -> Router {
     Router::new()
         .route("/", get(english))
@@ -50,6 +60,16 @@ fn app() -> Router {
         .route(
             "/concept/fr/",
             get(|| async { Redirect::permanent("/concept/fr") }),
+        )
+        .route("/concept-spatial", get(spatial_english))
+        .route("/concept-spatial/fr", get(spatial_french))
+        .route(
+            "/concept-spatial/",
+            get(|| async { Redirect::permanent("/concept-spatial") }),
+        )
+        .route(
+            "/concept-spatial/fr/",
+            get(|| async { Redirect::permanent("/concept-spatial/fr") }),
         )
         .route("/robots.txt", get(robots))
         .route("/sitemap.xml", get(sitemap))
@@ -94,6 +114,26 @@ async fn concept_french() -> Response {
     })
 }
 
+async fn spatial_english() -> Response {
+    render_spatial(SpatialTemplate {
+        lang: "en",
+        title: "Antoine Laborderie — Spatial portfolio concept",
+        description: "A spatial portfolio concept connecting Antoine Laborderie's platform engineering, developer experience and software delivery work.",
+        canonical: "https://antoinelaborderie.com/concept-spatial",
+        is_french: false,
+    })
+}
+
+async fn spatial_french() -> Response {
+    render_spatial(SpatialTemplate {
+        lang: "fr",
+        title: "Antoine Laborderie — Concept de portfolio spatial",
+        description: "Un concept de portfolio spatial reliant le Platform Engineering, l'expérience développeur et la livraison logicielle d'Antoine Laborderie.",
+        canonical: "https://antoinelaborderie.com/concept-spatial/fr",
+        is_french: true,
+    })
+}
+
 fn render(template: IndexTemplate) -> Response {
     match template.render() {
         Ok(body) => Html(body).into_response(),
@@ -109,6 +149,16 @@ fn render_concept(template: ConceptTemplate) -> Response {
         Ok(body) => Html(body).into_response(),
         Err(error) => {
             eprintln!("Concept template rendering failed: {error}");
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
+    }
+}
+
+fn render_spatial(template: SpatialTemplate) -> Response {
+    match template.render() {
+        Ok(body) => Html(body).into_response(),
+        Err(error) => {
+            eprintln!("Spatial concept template rendering failed: {error}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
@@ -220,6 +270,27 @@ mod tests {
         assert!(!sitemap.contains("/concept"));
     }
     #[tokio::test]
+    async fn serves_isolated_bilingual_spatial_pages() {
+        let (status, _, english) = request("/concept-spatial").await;
+        assert_eq!(status, StatusCode::OK);
+        assert!(english.contains("<html lang=\"en\""));
+        assert!(english.contains("name=\"robots\" content=\"noindex,follow\""));
+        assert!(english.contains("href=\"https://antoinelaborderie.com/concept-spatial\""));
+        assert!(english.contains("Reliable platforms and more effective developers"));
+        assert!(english.contains("href=\"/concept-spatial/fr\""));
+
+        let (status, _, french) = request("/concept-spatial/fr").await;
+        assert_eq!(status, StatusCode::OK);
+        assert!(french.contains("<html lang=\"fr\""));
+        assert!(french.contains("name=\"robots\" content=\"noindex,follow\""));
+        assert!(french.contains("href=\"https://antoinelaborderie.com/concept-spatial/fr\""));
+        assert!(french.contains("Des plateformes fiables et des développeurs plus efficaces"));
+        assert!(french.contains("href=\"/concept-spatial\""));
+
+        let (_, _, sitemap) = request("/sitemap.xml").await;
+        assert!(!sitemap.contains("concept-spatial"));
+    }
+    #[tokio::test]
     async fn permanent_redirects() {
         for (path, location) in [
             ("/en", "/"),
@@ -227,6 +298,8 @@ mod tests {
             ("/fr/", "/fr"),
             ("/concept/", "/concept"),
             ("/concept/fr/", "/concept/fr"),
+            ("/concept-spatial/", "/concept-spatial"),
+            ("/concept-spatial/fr/", "/concept-spatial/fr"),
         ] {
             let (s, h, _) = request(path).await;
             assert_eq!(s, StatusCode::PERMANENT_REDIRECT);
