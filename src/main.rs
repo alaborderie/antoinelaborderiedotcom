@@ -19,29 +19,7 @@ struct IndexTemplate {
     og_locale: &'static str,
     og_image_alt: &'static str,
     is_french: bool,
-    open_menu_label: &'static str,
-    close_menu_label: &'static str,
     json_ld: &'static str,
-}
-
-#[derive(Template)]
-#[template(path = "concept.html")]
-struct ConceptTemplate {
-    lang: &'static str,
-    title: &'static str,
-    description: &'static str,
-    canonical: &'static str,
-    is_french: bool,
-}
-
-#[derive(Template)]
-#[template(path = "concept-spatial.html")]
-struct SpatialTemplate {
-    lang: &'static str,
-    title: &'static str,
-    description: &'static str,
-    canonical: &'static str,
-    is_french: bool,
 }
 
 fn app() -> Router {
@@ -51,25 +29,25 @@ fn app() -> Router {
         .route("/en", get(|| async { Redirect::permanent("/") }))
         .route("/en/", get(|| async { Redirect::permanent("/") }))
         .route("/fr/", get(|| async { Redirect::permanent("/fr") }))
-        .route("/concept", get(concept_english))
-        .route("/concept/fr", get(concept_french))
+        .route("/concept", get(|| async { Redirect::permanent("/") }))
+        .route("/concept/fr", get(|| async { Redirect::permanent("/fr") }))
+        .route("/concept/", get(|| async { Redirect::permanent("/") }))
+        .route("/concept/fr/", get(|| async { Redirect::permanent("/fr") }))
         .route(
-            "/concept/",
-            get(|| async { Redirect::permanent("/concept") }),
+            "/concept-spatial",
+            get(|| async { Redirect::permanent("/") }),
         )
         .route(
-            "/concept/fr/",
-            get(|| async { Redirect::permanent("/concept/fr") }),
+            "/concept-spatial/fr",
+            get(|| async { Redirect::permanent("/fr") }),
         )
-        .route("/concept-spatial", get(spatial_english))
-        .route("/concept-spatial/fr", get(spatial_french))
         .route(
             "/concept-spatial/",
-            get(|| async { Redirect::permanent("/concept-spatial") }),
+            get(|| async { Redirect::permanent("/") }),
         )
         .route(
             "/concept-spatial/fr/",
-            get(|| async { Redirect::permanent("/concept-spatial/fr") }),
+            get(|| async { Redirect::permanent("/fr") }),
         )
         .route("/robots.txt", get(robots))
         .route("/sitemap.xml", get(sitemap))
@@ -88,50 +66,10 @@ async fn main() {
 }
 
 async fn english() -> Response {
-    render(IndexTemplate { lang:"en", title:"Antoine Laborderie | Freelance Platform Engineer, Bordeaux", description:"Platform Engineer in Bordeaux specializing in Kubernetes, developer experience and AI-assisted software delivery.", canonical:"https://antoinelaborderie.com/", og_locale:"en_GB", og_image_alt:"Antoine Laborderie — Platform Engineer and Developer Experience specialist", is_french:false, open_menu_label:"Open menu", close_menu_label:"Close menu", json_ld:json_ld("en", "https://antoinelaborderie.com/") })
+    render(IndexTemplate { lang:"en", title:"Antoine Laborderie | Freelance Platform Engineer, Bordeaux", description:"Platform Engineer in Bordeaux specializing in Kubernetes, developer experience and AI-assisted software delivery.", canonical:"https://antoinelaborderie.com/", og_locale:"en_GB", og_image_alt:"Antoine Laborderie — Platform Engineer and Developer Experience specialist", is_french:false, json_ld:json_ld("en", "https://antoinelaborderie.com/") })
 }
 async fn french() -> Response {
-    render(IndexTemplate { lang:"fr", title:"Antoine Laborderie | Ingénieur DevEx freelance à Bordeaux", description:"Platform Engineer à Bordeaux, spécialisé en Kubernetes, expérience développeur et développement logiciel assisté par IA.", canonical:"https://antoinelaborderie.com/fr", og_locale:"fr_FR", og_image_alt:"Antoine Laborderie — spécialiste Platform Engineering et expérience développeur", is_french:true, open_menu_label:"Ouvrir le menu", close_menu_label:"Fermer le menu", json_ld:json_ld("fr", "https://antoinelaborderie.com/fr") })
-}
-
-async fn concept_english() -> Response {
-    render_concept(ConceptTemplate {
-        lang: "en",
-        title: "Antoine Laborderie — Interactive portfolio concept",
-        description: "An immersive portfolio concept exploring Antoine Laborderie's work across platform engineering, developer experience and software delivery.",
-        canonical: "https://antoinelaborderie.com/concept",
-        is_french: false,
-    })
-}
-
-async fn concept_french() -> Response {
-    render_concept(ConceptTemplate {
-        lang: "fr",
-        title: "Antoine Laborderie — Concept de portfolio interactif",
-        description: "Un concept de portfolio immersif autour du Platform Engineering, de l'expérience développeur et de la livraison logicielle.",
-        canonical: "https://antoinelaborderie.com/concept/fr",
-        is_french: true,
-    })
-}
-
-async fn spatial_english() -> Response {
-    render_spatial(SpatialTemplate {
-        lang: "en",
-        title: "Antoine Laborderie — Spatial portfolio concept",
-        description: "A spatial portfolio concept connecting Antoine Laborderie's platform engineering, developer experience and software delivery work.",
-        canonical: "https://antoinelaborderie.com/concept-spatial",
-        is_french: false,
-    })
-}
-
-async fn spatial_french() -> Response {
-    render_spatial(SpatialTemplate {
-        lang: "fr",
-        title: "Antoine Laborderie — Concept de portfolio spatial",
-        description: "Un concept de portfolio spatial reliant le Platform Engineering, l'expérience développeur et la livraison logicielle d'Antoine Laborderie.",
-        canonical: "https://antoinelaborderie.com/concept-spatial/fr",
-        is_french: true,
-    })
+    render(IndexTemplate { lang:"fr", title:"Antoine Laborderie | Ingénieur DevEx freelance à Bordeaux", description:"Platform Engineer à Bordeaux, spécialisé en Kubernetes, expérience développeur et développement logiciel assisté par IA.", canonical:"https://antoinelaborderie.com/fr", og_locale:"fr_FR", og_image_alt:"Antoine Laborderie — spécialiste Platform Engineering et expérience développeur", is_french:true, json_ld:json_ld("fr", "https://antoinelaborderie.com/fr") })
 }
 
 fn render(template: IndexTemplate) -> Response {
@@ -144,25 +82,6 @@ fn render(template: IndexTemplate) -> Response {
     }
 }
 
-fn render_concept(template: ConceptTemplate) -> Response {
-    match template.render() {
-        Ok(body) => Html(body).into_response(),
-        Err(error) => {
-            eprintln!("Concept template rendering failed: {error}");
-            StatusCode::INTERNAL_SERVER_ERROR.into_response()
-        }
-    }
-}
-
-fn render_spatial(template: SpatialTemplate) -> Response {
-    match template.render() {
-        Ok(body) => Html(body).into_response(),
-        Err(error) => {
-            eprintln!("Spatial concept template rendering failed: {error}");
-            StatusCode::INTERNAL_SERVER_ERROR.into_response()
-        }
-    }
-}
 async fn robots() -> impl IntoResponse {
     (
         [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
@@ -203,6 +122,7 @@ mod tests {
         http::Request,
     };
     use tower::ServiceExt;
+
     async fn request(path: &str) -> (StatusCode, axum::http::HeaderMap, String) {
         let response = app()
             .oneshot(Request::get(path).body(Body::empty()).unwrap())
@@ -213,97 +133,82 @@ mod tests {
         let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
         (status, headers, String::from_utf8(body.to_vec()).unwrap())
     }
+
     #[tokio::test]
-    async fn localized_pages() {
-        let (s, _, en) = request("/").await;
-        assert_eq!(s, StatusCode::OK);
+    async fn serves_indexable_localized_pages_with_complete_metadata() {
+        let (status, _, en) = request("/").await;
+        assert_eq!(status, StatusCode::OK);
         assert!(en.contains("<html lang=\"en\""));
         assert!(en
             .contains("<title>Antoine Laborderie | Freelance Platform Engineer, Bordeaux</title>"));
         assert!(en.contains("Reliable platforms and more effective developers"));
-        assert!(en.contains("https://antoinelaborderie.com/\""));
-        assert!(en.contains("hreflang=\"fr\""));
+        assert!(en.contains("rel=\"canonical\" href=\"https://antoinelaborderie.com/\""));
+        assert!(en.contains("property=\"og:type\" content=\"profile\""));
+        assert!(en.contains("name=\"twitter:card\" content=\"summary_large_image\""));
+        assert!(en.contains("href=\"/fr\""));
+        assert!(!en.contains("noindex"));
+        assert_eq!(en.matches("<h1").count(), 1);
         assert_json_ld_is_valid(&en);
-        let (s, _, fr) = request("/fr").await;
-        assert_eq!(s, StatusCode::OK);
+
+        let (status, _, fr) = request("/fr").await;
+        assert_eq!(status, StatusCode::OK);
         assert!(fr.contains("<html lang=\"fr\""));
         assert!(
             fr.contains("<title>Antoine Laborderie | Ingénieur DevEx freelance à Bordeaux</title>")
         );
         assert!(fr.contains("Des plateformes fiables et des développeurs plus efficaces"));
-        assert!(fr.contains("https://antoinelaborderie.com/fr"));
-        assert!(fr.contains("hreflang=\"en\""));
+        assert!(fr.contains("rel=\"canonical\" href=\"https://antoinelaborderie.com/fr\""));
+        assert!(fr.contains("property=\"og:locale\" content=\"fr_FR\""));
+        assert!(fr.contains("href=\"/\""));
+        assert!(!fr.contains("noindex"));
+        assert_eq!(fr.matches("<h1").count(), 1);
         assert_json_ld_is_valid(&fr);
     }
+
     #[tokio::test]
-    async fn machine_routes_and_404() {
-        let (_, h, b) = request("/robots.txt").await;
-        assert_eq!(h[header::CONTENT_TYPE], "text/plain; charset=utf-8");
-        assert!(b.contains("Sitemap:"));
-        let (_, h, b) = request("/sitemap.xml").await;
-        assert_eq!(h[header::CONTENT_TYPE], "application/xml; charset=utf-8");
-        assert!(b.contains("<loc>https://antoinelaborderie.com/fr</loc>"));
-        let (status, h, _) = request("/favicon.ico").await;
-        assert_eq!(status, StatusCode::OK);
-        assert_eq!(h[header::CONTENT_TYPE], "image/svg+xml");
+    async fn serves_machine_and_public_assets_with_real_404s() {
+        let (_, headers, robots) = request("/robots.txt").await;
+        assert_eq!(headers[header::CONTENT_TYPE], "text/plain; charset=utf-8");
+        assert!(robots.contains("Sitemap:"));
+        let (_, headers, sitemap) = request("/sitemap.xml").await;
+        assert_eq!(
+            headers[header::CONTENT_TYPE],
+            "application/xml; charset=utf-8"
+        );
+        assert!(sitemap.contains("<loc>https://antoinelaborderie.com/fr</loc>"));
+        assert!(!sitemap.contains("concept"));
+        assert_eq!(request("/favicon.ico").await.0, StatusCode::OK);
+        assert_eq!(request("/static/styles.css").await.0, StatusCode::OK);
+        assert_eq!(request("/static/main.js").await.0, StatusCode::OK);
+        assert_eq!(
+            request("/static/concept.css").await.0,
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            request("/static/concept-spatial.js").await.0,
+            StatusCode::NOT_FOUND
+        );
         assert_eq!(request("/missing").await.0, StatusCode::NOT_FOUND);
     }
+
     #[tokio::test]
-    async fn serves_isolated_bilingual_concept_pages() {
-        let (status, _, english) = request("/concept").await;
-        assert_eq!(status, StatusCode::OK);
-        assert!(english.contains("<html lang=\"en\""));
-        assert!(english.contains("<meta name=\"robots\" content=\"noindex,follow\">"));
-        assert!(english.contains("href=\"https://antoinelaborderie.com/concept\""));
-        assert!(english.contains("Reliable platforms and more effective developers"));
-        assert!(english.contains("href=\"/concept/fr\""));
-
-        let (status, _, french) = request("/concept/fr").await;
-        assert_eq!(status, StatusCode::OK);
-        assert!(french.contains("<html lang=\"fr\""));
-        assert!(french.contains("<meta name=\"robots\" content=\"noindex,follow\">"));
-        assert!(french.contains("href=\"https://antoinelaborderie.com/concept/fr\""));
-        assert!(french.contains("Des plateformes fiables et des développeurs plus efficaces"));
-        assert!(french.contains("href=\"/concept\""));
-
-        let (_, _, sitemap) = request("/sitemap.xml").await;
-        assert!(!sitemap.contains("/concept"));
-    }
-    #[tokio::test]
-    async fn serves_isolated_bilingual_spatial_pages() {
-        let (status, _, english) = request("/concept-spatial").await;
-        assert_eq!(status, StatusCode::OK);
-        assert!(english.contains("<html lang=\"en\""));
-        assert!(english.contains("name=\"robots\" content=\"noindex,follow\""));
-        assert!(english.contains("href=\"https://antoinelaborderie.com/concept-spatial\""));
-        assert!(english.contains("Reliable platforms and more effective developers"));
-        assert!(english.contains("href=\"/concept-spatial/fr\""));
-
-        let (status, _, french) = request("/concept-spatial/fr").await;
-        assert_eq!(status, StatusCode::OK);
-        assert!(french.contains("<html lang=\"fr\""));
-        assert!(french.contains("name=\"robots\" content=\"noindex,follow\""));
-        assert!(french.contains("href=\"https://antoinelaborderie.com/concept-spatial/fr\""));
-        assert!(french.contains("Des plateformes fiables et des développeurs plus efficaces"));
-        assert!(french.contains("href=\"/concept-spatial\""));
-
-        let (_, _, sitemap) = request("/sitemap.xml").await;
-        assert!(!sitemap.contains("concept-spatial"));
-    }
-    #[tokio::test]
-    async fn permanent_redirects() {
+    async fn permanently_redirects_legacy_locale_and_concept_routes() {
         for (path, location) in [
             ("/en", "/"),
             ("/en/", "/"),
             ("/fr/", "/fr"),
-            ("/concept/", "/concept"),
-            ("/concept/fr/", "/concept/fr"),
-            ("/concept-spatial/", "/concept-spatial"),
-            ("/concept-spatial/fr/", "/concept-spatial/fr"),
+            ("/concept", "/"),
+            ("/concept/", "/"),
+            ("/concept/fr", "/fr"),
+            ("/concept/fr/", "/fr"),
+            ("/concept-spatial", "/"),
+            ("/concept-spatial/", "/"),
+            ("/concept-spatial/fr", "/fr"),
+            ("/concept-spatial/fr/", "/fr"),
         ] {
-            let (s, h, _) = request(path).await;
-            assert_eq!(s, StatusCode::PERMANENT_REDIRECT);
-            assert_eq!(h[header::LOCATION], location);
+            let (status, headers, _) = request(path).await;
+            assert_eq!(status, StatusCode::PERMANENT_REDIRECT);
+            assert_eq!(headers[header::LOCATION], location);
         }
     }
 
@@ -313,5 +218,6 @@ mod tests {
         let end = document[start..].find("</script>").unwrap() + start;
         let value: serde_json::Value = serde_json::from_str(&document[start..end]).unwrap();
         assert_eq!(value["@context"], "https://schema.org");
+        assert_eq!(value["@graph"][0]["name"], "Antoine Laborderie");
     }
 }
