@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scrollbar-width: thin; scrollbar-color: #334155 #0f172a; }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: #0f172a; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 5px; border: 2px solid #0f172a; }
+}
+
+@layer components {
+  .glass-nav { background-color: rgb(15 23 42 / 90%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  .text-gradient { background: linear-gradient(to right, #22d3ee, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+}
