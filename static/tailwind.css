@@ -38,7 +38,9 @@
   .project-card { @apply flex min-h-52 flex-col rounded-2xl border border-slate-700/70 bg-slate-800/45 p-6 transition duration-300 hover:-translate-y-1 hover:border-cyan-400/50 hover:bg-slate-800/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 motion-reduce:hover:translate-y-0; }
   .project-card > span { @apply text-xs font-semibold uppercase tracking-wider text-cyan-300; }
   .project-card h4 { @apply mt-5 flex items-center justify-between gap-3 text-lg font-bold text-white; }
-  .project-card h4 b { @apply font-normal text-slate-500 transition group-hover:text-cyan-300; }
+  .project-card h4 b { @apply font-normal text-slate-500 transition; }
+  .project-card:hover h4 b,
+  .project-card:focus-visible h4 b { @apply text-cyan-300; }
   .project-card p { @apply mt-3 leading-relaxed text-slate-400; }
   .timeline-row { @apply grid gap-5 py-8 md:grid-cols-[13rem_1fr] md:gap-10; }
   .timeline-row time { @apply text-xs font-semibold uppercase tracking-wider text-cyan-300; }
