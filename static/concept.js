@@ -7,9 +7,15 @@
 
   if (finePointer.matches && !reducedMotion.matches) {
     document.body.classList.add('has-pointer');
+    let rafPending = false;
     window.addEventListener('pointermove', (event) => {
-      root.style.setProperty('--pointer-x', `${event.clientX}px`);
-      root.style.setProperty('--pointer-y', `${event.clientY}px`);
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        root.style.setProperty('--pointer-x', `${event.clientX}px`);
+        root.style.setProperty('--pointer-y', `${event.clientY}px`);
+        rafPending = false;
+      });
     }, { passive: true });
   }
 
