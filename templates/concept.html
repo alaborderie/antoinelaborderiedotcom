@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" id="concept-top" class="concept-no-js">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <meta name="description" content="{{ description }}">
+  <meta name="robots" content="noindex,follow">
+  <link rel="canonical" href="{{ canonical }}">
+  <link rel="alternate" hreflang="en" href="https://antoinelaborderie.com/concept">
+  <link rel="alternate" hreflang="fr" href="https://antoinelaborderie.com/concept/fr">
+  <link rel="alternate" hreflang="x-default" href="https://antoinelaborderie.com/concept">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="/static/concept.css">
+  <script>document.documentElement.className='concept-js';</script>
+  <script src="/static/concept.js" defer></script>
+</head>
+<body data-locale="{{ lang }}">
+  {% if is_french %}{% include "content/concept-fr.html" %}{% else %}{% include "content/concept-en.html" %}{% endif %}
+</body>
+</html>
