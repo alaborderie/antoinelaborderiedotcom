@@ -173,7 +173,10 @@ button {
 .space-nav a:focus-visible,
 .space-nav a:hover {
   color: var(--active);
-  outline: 2px solid transparent;
+}
+.space-nav a:focus-visible {
+  outline: 2px solid var(--active);
+  outline-offset: 2px;
 }
 .space-hero {
   position: relative;

@@ -22,10 +22,11 @@
       hreflang="x-default"
       href="https://antoinelaborderie.com/concept-spatial"
     />
-    <link rel="icon" href="/favicon.ico" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="stylesheet" href="/static/concept-spatial.css" />
     <script>
-      document.documentElement.className = "spatial-js";
+      document.documentElement.classList.remove("spatial-no-js");
+      document.documentElement.classList.add("spatial-js");
     </script>
     <script defer src="/static/concept-spatial.js"></script>
   </head>
