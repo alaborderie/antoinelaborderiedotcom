@@ -1,18 +1,60 @@
-<!DOCTYPE html>
-<html lang="{{ lang }}" id="top" class="scroll-smooth">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ title }}</title><meta name="description" content="{{ description }}">
-<link rel="canonical" href="{{ canonical }}"><link rel="alternate" hreflang="en" href="https://antoinelaborderie.com/"><link rel="alternate" hreflang="fr" href="https://antoinelaborderie.com/fr"><link rel="alternate" hreflang="x-default" href="https://antoinelaborderie.com/">
-<link rel="icon" href="/favicon.ico" sizes="any"><link rel="stylesheet" href="/static/styles.css">
-<meta property="og:type" content="profile"><meta property="og:site_name" content="Antoine Laborderie"><meta property="og:locale" content="{{ og_locale }}"><meta property="og:title" content="{{ title }}"><meta property="og:description" content="{{ description }}"><meta property="og:url" content="{{ canonical }}"><meta property="og:image" content="https://antoinelaborderie.com/static/og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="{{ og_image_alt }}">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{{ title }}"><meta name="twitter:description" content="{{ description }}"><meta name="twitter:image" content="https://antoinelaborderie.com/static/og-image.png"><meta name="twitter:image:alt" content="{{ og_image_alt }}">
-<script type="application/ld+json">{{ json_ld|safe }}</script>
-</head>
-<body class="bg-slate-900 text-slate-50 antialiased selection:bg-cyan-500 selection:text-white">
-{% if is_french %}{% include "content/fr.html" %}{% else %}{% include "content/en.html" %}{% endif %}
-<script>
-const button=document.getElementById('mobile-menu-btn');const menu=document.getElementById('mobile-menu');
-if(button&&menu){button.addEventListener('click',()=>{const expanded=button.getAttribute('aria-expanded')==='true';button.setAttribute('aria-expanded',String(!expanded));button.setAttribute('aria-label',expanded?'{{ open_menu_label }}':'{{ close_menu_label }}');menu.classList.toggle('hidden');});menu.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{menu.classList.add('hidden');button.setAttribute('aria-expanded','false');button.setAttribute('aria-label','{{ open_menu_label }}');}));}
-</script>
-</body></html>
+<!doctype html>
+<html lang="{{ lang }}" id="top" class="studio-no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}" />
+    <link rel="canonical" href="{{ canonical }}" />
+    <link rel="alternate" hreflang="en" href="https://antoinelaborderie.com/" />
+    <link
+      rel="alternate"
+      hreflang="fr"
+      href="https://antoinelaborderie.com/fr"
+    />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://antoinelaborderie.com/"
+    />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="stylesheet" href="/static/styles.css" />
+    <meta property="og:type" content="profile" />
+    <meta property="og:site_name" content="Antoine Laborderie" />
+    <meta property="og:locale" content="{{ og_locale }}" />
+    {% if is_french %}
+    <meta property="og:locale:alternate" content="en_GB" />
+    {% else %}
+    <meta property="og:locale:alternate" content="fr_FR" />
+    {% endif %}
+    <meta property="og:title" content="{{ title }}" />
+    <meta property="og:description" content="{{ description }}" />
+    <meta property="og:url" content="{{ canonical }}" />
+    <meta
+      property="og:image"
+      content="https://antoinelaborderie.com/static/og-image.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="{{ og_image_alt }}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{ title }}" />
+    <meta name="twitter:description" content="{{ description }}" />
+    <meta
+      name="twitter:image"
+      content="https://antoinelaborderie.com/static/og-image.png"
+    />
+    <meta name="twitter:image:alt" content="{{ og_image_alt }}" />
+    <script type="application/ld+json">
+      {{ json_ld|safe }}
+    </script>
+    <script>
+      document.documentElement.classList.add("studio-js");
+    </script>
+    <script src="/static/main.js" defer></script>
+  </head>
+  <body data-locale="{{ lang }}">
+    {% if is_french %}{% include "content/fr.html" %}{% else %}{% include
+    "content/en.html" %}{% endif %}
+  </body>
+</html>
