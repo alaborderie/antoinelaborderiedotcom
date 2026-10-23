@@ -1,0 +1,65 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": "https://antoinelaborderie.com/#person",
+      "name": "Antoine Laborderie",
+      "jobTitle": "Full-stack engineer · DevEx & AI · Agentic coding",
+      "url": "https://antoinelaborderie.com/",
+      "image": "https://antoinelaborderie.com/static/antoine-laborderie.webp",
+      "address": { "@type": "PostalAddress", "addressLocality": "Bordeaux", "addressCountry": "FR" },
+      "sameAs": ["https://github.com/alaborderie", "https://www.linkedin.com/in/antoine-laborderie", "https://www.malt.fr/profile/antoinelaborderie"]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://antoinelaborderie.com/#website",
+      "url": "https://antoinelaborderie.com/",
+      "name": "Antoine Laborderie",
+      "inLanguage": ["en", "fr"],
+      "publisher": { "@id": "https://antoinelaborderie.com/#person" }
+    },
+    {
+      "@type": "ProfilePage",
+      "url": "https://antoinelaborderie.com/",
+      "inLanguage": "en",
+      "mainEntity": { "@id": "https://antoinelaborderie.com/#person" },
+      "isPartOf": { "@id": "https://antoinelaborderie.com/#website" }
+    },
+    {
+      "@type": "Service",
+      "name": "DevEx & AI audit",
+      "description": "Review developer workflows and AI practices, with prioritized recommendations. Fixed-price, quote on request.",
+      "url": "https://antoinelaborderie.com/#services",
+      "provider": { "@id": "https://antoinelaborderie.com/#person" }
+    },
+    {
+      "@type": "Service",
+      "name": "Agentic coding kit for your team",
+      "description": "Rules, skills, role-specific agents, automated PR reviews and documentation, MCP integrations and a half-day training session. Fixed-price, quote on request.",
+      "url": "https://antoinelaborderie.com/#services",
+      "provider": { "@id": "https://antoinelaborderie.com/#person" }
+    },
+    {
+      "@type": "Service",
+      "name": "AI integration in your product (MVP)",
+      "description": "A scoped AI feature integrated into your product, from prototype to a working MVP. Fixed-price, quote on request.",
+      "url": "https://antoinelaborderie.com/#services",
+      "provider": { "@id": "https://antoinelaborderie.com/#person" }
+    },
+    {
+      "@type": "Service",
+      "name": "Internal tooling / Backstage portal",
+      "description": "Internal tools, a developer portal, service catalog and workflows tailored to your team. Fixed-price, quote on request.",
+      "url": "https://antoinelaborderie.com/#services",
+      "provider": { "@id": "https://antoinelaborderie.com/#person" }
+    },
+    {
+      "@type": "Service",
+      "name": "Multi-repository automation",
+      "description": "Automated updates, migrations and shared standards across your repositories. Fixed-price, quote on request.",
+      "url": "https://antoinelaborderie.com/#services",
+      "provider": { "@id": "https://antoinelaborderie.com/#person" }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{% extends "page.html" %}
+{% block title %}{% if is_french %}Mentions légales{% else %}Legal notice{% endif %}{% endblock %}
+{% block metadata %}
+<meta name="description" content="{% if is_french %}Mentions légales, éditeur, hébergeur et mesure d’audience du site d’Antoine Laborderie.{% else %}Publisher, hosting and audience measurement information for Antoine Laborderie's website.{% endif %}" />
+<link rel="canonical" href="{{ canonical }}" />
+<link rel="alternate" hreflang="en" href="https://antoinelaborderie.com/legal-notice" />
+<link rel="alternate" hreflang="fr" href="https://antoinelaborderie.com/fr/mentions-legales" />
+<link rel="alternate" hreflang="x-default" href="https://antoinelaborderie.com/legal-notice" />
+{% endblock %}
+{% block language_switch %}
+{% if is_french %}<a href="/legal-notice" lang="en" hreflang="en">EN</a>{% else %}<a href="/fr/mentions-legales" lang="fr" hreflang="fr">FR</a>{% endif %}
+{% endblock %}
+{% block content %}
+<p class="scene-number">{% if is_french %}Informations légales{% else %}Legal information{% endif %}</p>
+<h1>{% if is_french %}Mentions légales{% else %}Legal notice{% endif %}</h1>
+<section aria-labelledby="publisher-title">
+  <h2 id="publisher-title">{% if is_french %}Éditeur{% else %}Publisher{% endif %}</h2>
+  <p>Antoine Laborderie, {% if is_french %}entrepreneur individuel (EI){% else %}sole trader (entrepreneur individuel, EI){% endif %}</p>
+  <dl>
+    <dt>SIRET</dt><dd>844 240 168 00030</dd>
+    <dt>{% if is_french %}Adresse{% else %}Address{% endif %}</dt>
+    <dd>55 rue de la Peloue, 33127 Saint-Jean-d’Illac, France</dd>
+    <dt>Contact</dt><dd><a href="mailto:antoine.laborderie@gmail.com">antoine.laborderie@gmail.com</a></dd>
+    <dt>{% if is_french %}Directeur de la publication{% else %}Publication director{% endif %}</dt><dd>Antoine Laborderie</dd>
+  </dl>
+</section>
+<section aria-labelledby="host-title">
+  <h2 id="host-title">{% if is_french %}Hébergeur{% else %}Host{% endif %}</h2>
+  <p>OVH SAS<br />2 rue Kellermann, 59100 Roubaix, France<br /><a href="https://www.ovhcloud.com">https://www.ovhcloud.com</a></p>
+</section>
+<section aria-labelledby="analytics-title">
+  <h2 id="analytics-title">{% if is_french %}Mesure d’audience{% else %}Audience measurement{% endif %}</h2>
+  {% if is_french %}
+  <p>La page d’accueil charge le script de mesure d’audience Umami, hébergé sur <a href="https://umami.antoinelaborderie.com">umami.antoinelaborderie.com</a>, pour comptabiliser les visites. Umami est un outil respectueux de la vie privée qui fonctionne sans cookies de mesure d’audience.</p>
+  <p>Le code du site ne configure aucun événement de suivi personnalisé ni traceur publicitaire. Pour toute question, vous pouvez écrire à l’adresse de contact ci-dessus.</p>
+  {% else %}
+  <p>The home page loads the Umami analytics script, hosted at <a href="https://umami.antoinelaborderie.com">umami.antoinelaborderie.com</a>, to measure visits. Umami is a privacy-friendly analytics tool that works without analytics cookies.</p>
+  <p>The site's code configures no custom tracking events or advertising trackers. For questions, please use the contact email above.</p>
+  {% endif %}
+</section>
+{% endblock %}
