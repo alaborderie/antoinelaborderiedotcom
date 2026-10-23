@@ -57,7 +57,7 @@
     {
       "@type": "Service",
       "name": "Automatisation multi-repos",
-      "description": "Mises à jour, migrations et standards partagés automatisés à l'échelle de vos dépôts. Au forfait, sur devis.",
+      "description": "Mises à jour, migrations et standards partagés automatisés à l’échelle de vos dépôts. Au forfait, sur devis.",
       "url": "https://antoinelaborderie.com/fr#services",
       "provider": { "@id": "https://antoinelaborderie.com/#person" }
     }

@@ -6,15 +6,15 @@
 <p class="scene-number">404</p>
 {% if is_french %}
 <h1>Page introuvable</h1>
-<p>Cette page n'existe pas ou a été déplacée.</p>
+<p>Cette page n’existe pas ou a été déplacée.</p>
 <p lang="en">Page not found — this page does not exist or has moved.</p>
 {% else %}
 <h1>Page not found</h1>
 <p>This page does not exist or has moved.</p>
-<p lang="fr">Page introuvable — cette page n'existe pas ou a été déplacée.</p>
+<p lang="fr">Page introuvable — cette page n’existe pas ou a été déplacée.</p>
 {% endif %}
 <div class="error-actions">
-  <a class="button-primary" href="{% if is_french %}/fr{% else %}/{% endif %}">{% if is_french %}Retour à l'accueil{% else %}Back to home{% endif %} <span aria-hidden="true">↗</span></a>
+  <a class="button-primary" href="{% if is_french %}/fr{% else %}/{% endif %}">{% if is_french %}Retour à l’accueil{% else %}Back to home{% endif %} <span aria-hidden="true">↗</span></a>
   <a href="{% if is_french %}/{% else %}/fr{% endif %}" lang="{% if is_french %}en{% else %}fr{% endif %}">{% if is_french %}Home in English{% else %}Accueil en français{% endif %}</a>
 </div>
 {% endblock %}

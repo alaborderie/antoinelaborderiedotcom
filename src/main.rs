@@ -12,10 +12,13 @@ use tower_http::{compression::CompressionLayer, services::ServeDir};
 const SITE_URL: &str = "https://antoinelaborderie.com";
 // Content revision date, not the date of the request or build.
 const LAST_MODIFIED: &str = "2026-10-23";
+// Bump when CSS, JavaScript or social images change, including same-day releases.
+const ASSET_VERSION: &str = "2026-10-23-1";
 
 #[derive(Template)]
 #[template(path = "index.html")]
 struct IndexTemplate {
+    asset_version: &'static str,
     lang: &'static str,
     title: &'static str,
     description: &'static str,
@@ -29,6 +32,7 @@ struct IndexTemplate {
 #[derive(Template)]
 #[template(path = "legal.html")]
 struct LegalTemplate {
+    asset_version: &'static str,
     is_french: bool,
     canonical: &'static str,
 }
@@ -36,6 +40,7 @@ struct LegalTemplate {
 #[derive(Template)]
 #[template(path = "404.html")]
 struct NotFoundTemplate {
+    asset_version: &'static str,
     is_french: bool,
 }
 
@@ -45,6 +50,14 @@ fn app() -> Router {
         .route("/fr", get(french))
         .route("/legal-notice", get(legal_english))
         .route("/fr/mentions-legales", get(legal_french))
+        .route(
+            "/legal-notice/",
+            get(|| async { Redirect::permanent("/legal-notice") }),
+        )
+        .route(
+            "/fr/mentions-legales/",
+            get(|| async { Redirect::permanent("/fr/mentions-legales") }),
+        )
         .route("/en", get(|| async { Redirect::permanent("/") }))
         .route("/en/", get(|| async { Redirect::permanent("/") }))
         .route("/fr/", get(|| async { Redirect::permanent("/fr") }))
@@ -114,7 +127,8 @@ async fn http_policy(request: Request, next: Next) -> Response {
     let cache = if response.status().is_client_error() || response.status().is_server_error() {
         "no-store"
     } else if is_static {
-        // Assets are not fingerprinted, so avoid long-lived immutable caching.
+        // Templates version asset URLs; old query versions still resolve to the
+        // current files, so keep a bounded lifetime rather than immutable caching.
         "public, max-age=86400"
     } else {
         "public, max-age=300"
@@ -137,6 +151,7 @@ async fn main() {
 
 async fn english() -> Response {
     render(IndexTemplate {
+        asset_version: ASSET_VERSION,
         lang: "en",
         title: "Freelance DevEx & AI Engineer, Agentic Coding | Antoine Laborderie",
         description: "Freelance full-stack engineer in Bordeaux, France: agentic coding workflows, AI integration, developer tooling. Fixed-price projects, English or French.",
@@ -149,9 +164,10 @@ async fn english() -> Response {
 }
 async fn french() -> Response {
     render(IndexTemplate {
+        asset_version: ASSET_VERSION,
         lang: "fr",
         title: "Développeur freelance Bordeaux · DevEx & IA, agentic coding | Antoine Laborderie",
-        description: "Développeur Full Stack freelance à Bordeaux : workflows d'agentic coding, intégration IA, outillage DevEx (Backstage, Kubernetes). Projets au forfait.",
+        description: "Développeur Full Stack freelance à Bordeaux\u{a0}: workflows d’agentic coding, intégration IA, outillage DevEx (Backstage, Kubernetes). Projets au forfait.",
         canonical: "https://antoinelaborderie.com/fr",
         og_locale: "fr_FR",
         og_image_alt: "Antoine Laborderie — Développeur Full Stack · DevEx & IA · Agentic coding",
@@ -162,6 +178,7 @@ async fn french() -> Response {
 
 async fn legal_english() -> Response {
     render(LegalTemplate {
+        asset_version: ASSET_VERSION,
         is_french: false,
         canonical: "https://antoinelaborderie.com/legal-notice",
     })
@@ -169,6 +186,7 @@ async fn legal_english() -> Response {
 
 async fn legal_french() -> Response {
     render(LegalTemplate {
+        asset_version: ASSET_VERSION,
         is_french: true,
         canonical: "https://antoinelaborderie.com/fr/mentions-legales",
     })
@@ -176,6 +194,7 @@ async fn legal_french() -> Response {
 
 async fn not_found(uri: Uri) -> Response {
     let mut response = render(NotFoundTemplate {
+        asset_version: ASSET_VERSION,
         is_french: uri.path().starts_with("/fr/"),
     });
     if response.status().is_success() {
@@ -269,7 +288,7 @@ mod tests {
         assert!(fr.contains(
             "Développeur freelance Bordeaux · DevEx &#38; IA, agentic coding | Antoine Laborderie"
         ));
-        assert!(fr.contains("Je conçois des workflows d'agentic coding"));
+        assert!(fr.contains("Je conçois des workflows d’agentic coding"));
         assert!(fr.contains("rel=\"canonical\" href=\"https://antoinelaborderie.com/fr\""));
         assert!(fr.contains("property=\"og:locale\" content=\"fr_FR\""));
         assert!(fr.contains("href=\"/\""));
@@ -305,11 +324,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn permanently_redirects_legacy_locale_and_concept_routes() {
+    async fn permanently_redirects_legacy_and_trailing_slash_routes() {
         for (path, location) in [
             ("/en", "/"),
             ("/en/", "/"),
             ("/fr/", "/fr"),
+            ("/legal-notice/", "/legal-notice"),
+            ("/fr/mentions-legales/", "/fr/mentions-legales"),
             ("/concept", "/"),
             ("/concept/", "/"),
             ("/concept/fr", "/fr"),
@@ -348,7 +369,7 @@ mod tests {
                 "Antoine Laborderie",
                 "844 240 168 00030",
                 "55 rue de la Peloue",
-                "33127 Saint-Jean-d'Illac",
+                "33127 Saint-Jean-d’Illac",
                 "OVH SAS",
                 "2 rue Kellermann",
                 "59100 Roubaix",
@@ -444,6 +465,65 @@ mod tests {
                 "{path}"
             );
             assert_eq!(headers[header::CACHE_CONTROL], cache, "{path}");
+        }
+    }
+
+    #[tokio::test]
+    async fn links_versioned_assets_on_every_page_and_serves_them_with_caching() {
+        let (_, _, home) = request("/").await;
+        let version = home
+            .split("href=\"/static/styles.css?v=")
+            .nth(1)
+            .expect("Home stylesheet must have a version query")
+            .split('"')
+            .next()
+            .unwrap();
+        assert!(!version.is_empty());
+        assert!(version
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || ch == '-'));
+
+        for path in [
+            "/",
+            "/fr",
+            "/legal-notice",
+            "/fr/mentions-legales",
+            "/missing",
+            "/fr/missing",
+            "/static/missing.css",
+        ] {
+            let (_, _, body) = request(path).await;
+            assert!(
+                body.contains(&format!("href=\"/static/styles.css?v={version}\"")),
+                "{path}"
+            );
+            assert!(!body.contains("href=\"/static/styles.css\""));
+            if path == "/" || path == "/fr" {
+                assert!(body.contains(&format!("src=\"/static/main.js?v={version}\"")));
+                assert_eq!(
+                    body.matches(&format!(
+                        "content=\"https://antoinelaborderie.com/static/og-image.png?v={version}\""
+                    ))
+                    .count(),
+                    2
+                );
+            }
+        }
+
+        for asset in ["styles.css", "main.js", "og-image.png"] {
+            let response = app()
+                .oneshot(
+                    Request::get(format!("/static/{asset}?v={version}"))
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::OK, "{asset}");
+            assert_eq!(
+                response.headers()[header::CACHE_CONTROL],
+                "public, max-age=86400"
+            );
         }
     }
 
