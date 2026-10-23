@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="{% if is_french %}fr{% else %}en{% endif %}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}{% endblock %} | Antoine Laborderie</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="stylesheet" href="/static/styles.css" />
+    {% block metadata %}{% endblock %}
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{% if is_french %}Aller au contenu{% else %}Skip to content{% endif %}</a>
+    <nav class="concept-nav page-nav" aria-label="{% if is_french %}Navigation principale{% else %}Primary navigation{% endif %}">
+      <a class="concept-mark" href="{% if is_french %}/fr{% else %}/{% endif %}">AL<span>/</span>26</a>
+      <div class="concept-nav-actions">{% block language_switch %}{% endblock %}</div>
+    </nav>
+    <main id="main" class="info-page">
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="concept-footer">
+      <span>Antoine Laborderie · 2026</span>
+      <div>
+        {% if is_french %}
+        <a href="/fr">Accueil</a><a href="/fr/mentions-legales">Mentions légales</a>
+        {% else %}
+        <a href="/">Home</a><a href="/legal-notice">Legal notice</a>
+        {% endif %}
+      </div>
+    </footer>
+  </body>
+</html>

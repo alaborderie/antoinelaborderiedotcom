@@ -1,0 +1,65 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": "https://antoinelaborderie.com/#person",
+      "name": "Antoine Laborderie",
+      "jobTitle": "Développeur Full Stack · DevEx & IA · Agentic coding",
+      "url": "https://antoinelaborderie.com/fr",
+      "image": "https://antoinelaborderie.com/static/antoine-laborderie.webp",
+      "address": { "@type": "PostalAddress", "addressLocality": "Bordeaux", "addressCountry": "FR" },
+      "sameAs": ["https://github.com/alaborderie", "https://www.linkedin.com/in/antoine-laborderie", "https://www.malt.fr/profile/antoinelaborderie"]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://antoinelaborderie.com/#website",
+      "url": "https://antoinelaborderie.com/",
+      "name": "Antoine Laborderie",
+      "inLanguage": ["en", "fr"],
+      "publisher": { "@id": "https://antoinelaborderie.com/#person" }
+    },
+    {
+      "@type": "ProfilePage",
+      "url": "https://antoinelaborderie.com/fr",
+      "inLanguage": "fr",
+      "mainEntity": { "@id": "https://antoinelaborderie.com/#person" },
+      "isPartOf": { "@id": "https://antoinelaborderie.com/#website" }
+    },
+    {
+      "@type": "Service",
+      "name": "Audit DevEx & IA",
+      "description": "Analyse de vos workflows développeur et pratiques IA, avec recommandations priorisées. Au forfait, sur devis.",
+      "url": "https://antoinelaborderie.com/fr#services",
+      "provider": { "@id": "https://antoinelaborderie.com/#person" }
+    },
+    {
+      "@type": "Service",
+      "name": "Kit agentic coding pour votre équipe",
+      "description": "Rules, skills, agents par rôle, revue de PR et documentation automatisées, intégrations MCP et demi-journée de formation. Au forfait, sur devis.",
+      "url": "https://antoinelaborderie.com/fr#services",
+      "provider": { "@id": "https://antoinelaborderie.com/#person" }
+    },
+    {
+      "@type": "Service",
+      "name": "Intégration IA dans votre produit (MVP)",
+      "description": "Une fonctionnalité IA au périmètre défini, intégrée à votre produit, du prototype au MVP utilisable. Au forfait, sur devis.",
+      "url": "https://antoinelaborderie.com/fr#services",
+      "provider": { "@id": "https://antoinelaborderie.com/#person" }
+    },
+    {
+      "@type": "Service",
+      "name": "Outillage interne / portail Backstage",
+      "description": "Outils internes, portail développeur, catalogue de services et workflows adaptés à votre équipe. Au forfait, sur devis.",
+      "url": "https://antoinelaborderie.com/fr#services",
+      "provider": { "@id": "https://antoinelaborderie.com/#person" }
+    },
+    {
+      "@type": "Service",
+      "name": "Automatisation multi-repos",
+      "description": "Mises à jour, migrations et standards partagés automatisés à l'échelle de vos dépôts. Au forfait, sur devis.",
+      "url": "https://antoinelaborderie.com/fr#services",
+      "provider": { "@id": "https://antoinelaborderie.com/#person" }
+    }
+  ]
+}

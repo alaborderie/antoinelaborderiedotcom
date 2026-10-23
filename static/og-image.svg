@@ -17,8 +17,9 @@
   <text x="76" y="245" fill="#f3efe4" font-family="DejaVu Sans, sans-serif" font-size="86" font-weight="800" letter-spacing="-4">ANTOINE</text>
   <text x="76" y="335" fill="none" stroke="#b9ff4a" stroke-width="2" font-family="DejaVu Sans, sans-serif" font-size="86" font-weight="800" letter-spacing="-4">LABORDERIE</text>
   <line x1="80" y1="392" x2="1120" y2="392" stroke="#f3efe4" stroke-opacity="0.18" />
-  <text x="80" y="450" fill="#f3efe4" font-family="DejaVu Sans, sans-serif" font-size="35" font-weight="700">Platform Engineer · Developer Experience</text>
-  <text x="80" y="505" fill="#aaa69d" font-family="DejaVu Sans, sans-serif" font-size="26">Kubernetes · DevEx · Agentic AI · Software Engineering</text>
+  <text x="80" y="445" fill="#f3efe4" font-family="DejaVu Sans, sans-serif" font-size="30" font-weight="700">Full-stack engineer · DevEx &amp; AI · Agentic coding</text>
+  <text x="80" y="490" fill="#f3efe4" font-family="DejaVu Sans, sans-serif" font-size="28">Développeur Full Stack · DevEx &amp; IA · Agentic coding</text>
+  <text x="80" y="530" fill="#aaa69d" font-family="DejaVu Sans, sans-serif" font-size="22">Fixed-price projects · Projets au forfait · FR / EN</text>
   <rect x="80" y="555" width="172" height="6" rx="3" fill="#b9ff4a" />
   <circle cx="275" cy="558" r="6" fill="#ff8c5a" />
 </svg>
