@@ -1,0 +1,26 @@
+[
+  {
+    "query": "Update the selected work section on antoinelaborderie.com.",
+    "should_trigger": true
+  },
+  {
+    "query": "Fix a rendering bug in the Askama templates for the portfolio site.",
+    "should_trigger": true
+  },
+  {
+    "query": "Deploy the personal portfolio to the landing-website Kubernetes deployment.",
+    "should_trigger": true
+  },
+  {
+    "query": "Build a portfolio site for a client.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write an Axum server for some other Rust project.",
+    "should_trigger": false
+  },
+  {
+    "query": "What are good sections to include on a developer portfolio in general?",
+    "should_trigger": false
+  }
+]
