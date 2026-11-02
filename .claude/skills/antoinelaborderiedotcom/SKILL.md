@@ -4,7 +4,7 @@ description: >
   Architecture and editing context for Antoine Laborderie's bilingual portfolio (antoinelaborderie.com). Use when updating its content, fixing the Rust/Axum/Askama application, or preparing its deployment.
 metadata:
   author: alaborderie
-  version: 1.1.0
+  version: 1.1.1
 ---
 
 # antoinelaborderiedotcom — Personal Portfolio
@@ -31,7 +31,7 @@ Public offer: fixed-price projects, quote on request. Contact is `mailto:antoine
 │       ├── en.json
 │       └── fr.json
 ├── templates/                  — Askama templates (compiled into the binary)
-│   ├── index.html              — Home shell: SEO, Open Graph, Umami, JSON-LD
+│   ├── index.html              — Home shell: SEO, Open Graph, PostHog, JSON-LD
 │   ├── content/en.html         — English home copy
 │   ├── content/fr.html         — French home copy
 │   ├── page.html               — Shared chrome for legal and 404 pages
@@ -54,7 +54,7 @@ One Rust binary serves every page. Askama compiles `templates/` into the binary 
 | HTTP | Tower and tower-http (static files, gzip, brotli) |
 | Styling | Hand-written CSS in `static/styles.css` |
 | Client script | `static/main.js` (progressive enhancement) |
-| Analytics | Umami on the home page only (`templates/index.html`) |
+| Analytics | PostHog Cloud EU (`eu.i.posthog.com`) on the home page only (`templates/index.html`), with `cookieless_mode: "always"`, autocapture and session recording off |
 | Structured data | `src/structured_data/{en,fr}.json` |
 
 `static/main.js` adds pointer lighting, scene color, and the selected-work index. Pages stay usable without it: the document starts as `studio-no-js`.
@@ -100,7 +100,7 @@ Change both languages together:
 
 When the public content revision date changes, update `LAST_MODIFIED` (sitemap `lastmod` only). When `static/styles.css`, `static/main.js`, or a social image changes, bump `ASSET_VERSION` in `src/main.rs`. Both constants are dates of the content or asset revision, not the request or build time.
 
-Legal copy is `templates/legal.html` (publisher, OVH host, Umami). It extends `templates/page.html`.
+Legal copy is `templates/legal.html` (publisher, OVH host, PostHog analytics). Keep its analytics text in line with the `posthog.init` options in `templates/index.html` and with three PostHog project settings outside the repo: cookieless tracking on, client IP data discarded, events retention 13 months. It extends `templates/page.html`.
 
 ## Local development
 
