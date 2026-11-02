@@ -100,7 +100,7 @@ Change both languages together:
 
 When the public content revision date changes, update `LAST_MODIFIED` (sitemap `lastmod` only). When `static/styles.css`, `static/main.js`, or a social image changes, bump `ASSET_VERSION` in `src/main.rs`. Both constants are dates of the content or asset revision, not the request or build time.
 
-Legal copy is `templates/legal.html` (publisher, OVH host, PostHog analytics). Keep its analytics text in line with the `posthog.init` options in `templates/index.html`. It extends `templates/page.html`.
+Legal copy is `templates/legal.html` (publisher, OVH host, PostHog analytics). Keep its analytics text in line with the `posthog.init` options in `templates/index.html` and with three PostHog project settings outside the repo: cookieless tracking on, client IP data discarded, events retention 13 months. It extends `templates/page.html`.
 
 ## Local development
 

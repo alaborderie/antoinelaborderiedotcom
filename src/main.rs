@@ -11,7 +11,7 @@ use tower_http::{compression::CompressionLayer, services::ServeDir};
 
 const SITE_URL: &str = "https://antoinelaborderie.com";
 // Content revision date, not the date of the request or build.
-const LAST_MODIFIED: &str = "2026-10-23";
+const LAST_MODIFIED: &str = "2026-11-02";
 // Bump when CSS, JavaScript or social images change, including same-day releases.
 const ASSET_VERSION: &str = "2026-10-23-1";
 
@@ -348,18 +348,20 @@ mod tests {
 
     #[tokio::test]
     async fn serves_localized_legal_notices_with_publisher_and_host_details() {
-        for (path, lang, heading, alternate) in [
+        for (path, lang, heading, alternate, analytics) in [
             (
                 "/legal-notice",
                 "en",
                 "Legal notice",
                 "/fr/mentions-legales",
+                ["configured without cookies", "kept for 13 months"],
             ),
             (
                 "/fr/mentions-legales",
                 "fr",
                 "Mentions légales",
                 "/legal-notice",
+                ["configuré sans cookies", "conservées 13 mois"],
             ),
         ] {
             let (status, _, body) = request(path).await;
@@ -375,9 +377,12 @@ mod tests {
                 "59100 Roubaix",
                 "https://www.ovhcloud.com",
                 "mailto:antoine.laborderie@gmail.com",
-                "PostHog",
                 "PostHog Cloud EU",
-            ] {
+                "https://www.cnil.fr",
+            ]
+            .into_iter()
+            .chain(analytics)
+            {
                 assert!(body.contains(text), "{path}: missing {text}");
             }
             assert!(body.contains(&format!("<html lang=\"{lang}\"")));
@@ -397,7 +402,9 @@ mod tests {
                 "posthog.init(\"phc_",
                 "api_host: \"https://eu.i.posthog.com\"",
                 "cookieless_mode: \"always\"",
+                "person_profiles: \"never\"",
                 "autocapture: false",
+                "capture_exceptions: false",
                 "disable_session_recording: true",
             ] {
                 assert!(body.contains(text), "{path}: missing {text}");
@@ -412,6 +419,15 @@ mod tests {
         ] {
             let (_, _, body) = request(path).await;
             assert!(!body.contains("umami"), "{path}: still loads Umami");
+        }
+        for path in [
+            "/legal-notice",
+            "/fr/mentions-legales",
+            "/missing",
+            "/fr/missing",
+        ] {
+            let (_, _, body) = request(path).await;
+            assert!(!body.contains("i.posthog.com"), "{path}: loads PostHog");
         }
     }
 
@@ -600,7 +616,7 @@ mod tests {
                     entry.contains(&format!("<loc>https://antoinelaborderie.com{path}</loc>"))
                 })
                 .unwrap();
-            assert!(entry.contains("<lastmod>2026-10-23</lastmod>"));
+            assert!(entry.contains("<lastmod>2026-11-02</lastmod>"));
             for (lang, target) in [("en", en), ("fr", fr), ("x-default", en)] {
                 assert!(entry.contains(&format!(
                     "hreflang=\"{lang}\" href=\"https://antoinelaborderie.com{target}\""
