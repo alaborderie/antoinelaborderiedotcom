@@ -31,11 +31,13 @@
 <section aria-labelledby="analytics-title">
   <h2 id="analytics-title">{% if is_french %}Mesure d’audience{% else %}Audience measurement{% endif %}</h2>
   {% if is_french %}
-  <p>La page d’accueil charge le script de mesure d’audience Umami, hébergé sur <a href="https://umami.antoinelaborderie.com">umami.antoinelaborderie.com</a>, pour comptabiliser les visites. Umami est un outil respectueux de la vie privée qui fonctionne sans cookies de mesure d’audience.</p>
-  <p>Le code du site ne configure aucun événement de suivi personnalisé ni traceur publicitaire. Pour toute question, vous pouvez écrire à l’adresse de contact ci-dessus.</p>
+  <p>La page d’accueil charge le script de mesure d’audience <a href="https://posthog.com">PostHog</a>, édité par PostHog Inc., pour mesurer sa fréquentation. Les données sont hébergées dans l’Union européenne (PostHog Cloud EU).</p>
+  <p>PostHog est configuré sans cookies : il n’écrit rien dans le stockage du navigateur. Les visiteurs sont comptés sur les serveurs de PostHog, par un hachage de l’adresse IP et du navigateur avec un sel renouvelé chaque jour. Un même visiteur n’est donc pas reconnu d’un jour à l’autre.</p>
+  <p>Le code du site ne configure aucun événement de suivi personnalisé ni traceur publicitaire. La capture automatique des clics et l’enregistrement des sessions sont désactivés. Pour toute question, vous pouvez écrire à l’adresse de contact ci-dessus.</p>
   {% else %}
-  <p>The home page loads the Umami analytics script, hosted at <a href="https://umami.antoinelaborderie.com">umami.antoinelaborderie.com</a>, to measure visits. Umami is a privacy-friendly analytics tool that works without analytics cookies.</p>
-  <p>The site's code configures no custom tracking events or advertising trackers. For questions, please use the contact email above.</p>
+  <p>The home page loads the <a href="https://posthog.com">PostHog</a> analytics script, published by PostHog Inc., to measure its traffic. The data is hosted in the European Union (PostHog Cloud EU).</p>
+  <p>PostHog is configured without cookies: it writes nothing to browser storage. Visitors are counted on PostHog's servers by hashing the IP address and browser with a salt that changes every day. The same visitor is therefore not recognised from one day to the next.</p>
+  <p>The site's code configures no custom tracking events or advertising trackers. Click autocapture and session recording are turned off. For questions, please use the contact email above.</p>
   {% endif %}
 </section>
 {% endblock %}

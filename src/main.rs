@@ -375,7 +375,8 @@ mod tests {
                 "59100 Roubaix",
                 "https://www.ovhcloud.com",
                 "mailto:antoine.laborderie@gmail.com",
-                "Umami",
+                "PostHog",
+                "PostHog Cloud EU",
             ] {
                 assert!(body.contains(text), "{path}: missing {text}");
             }
@@ -385,6 +386,32 @@ mod tests {
             )));
             assert!(body.contains(&format!("href=\"{alternate}\"")));
             assert!(!body.contains("TODO"));
+        }
+    }
+
+    #[tokio::test]
+    async fn home_pages_load_cookieless_posthog_eu_analytics() {
+        for path in ["/", "/fr"] {
+            let (_, _, body) = request(path).await;
+            for text in [
+                "posthog.init(\"phc_",
+                "api_host: \"https://eu.i.posthog.com\"",
+                "cookieless_mode: \"always\"",
+                "autocapture: false",
+                "disable_session_recording: true",
+            ] {
+                assert!(body.contains(text), "{path}: missing {text}");
+            }
+        }
+        for path in [
+            "/",
+            "/fr",
+            "/legal-notice",
+            "/fr/mentions-legales",
+            "/missing",
+        ] {
+            let (_, _, body) = request(path).await;
+            assert!(!body.contains("umami"), "{path}: still loads Umami");
         }
     }
 
