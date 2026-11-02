@@ -354,14 +354,22 @@ mod tests {
                 "en",
                 "Legal notice",
                 "/fr/mentions-legales",
-                ["configured without cookies", "kept for 13 months"],
+                [
+                    "configured without cookies",
+                    "how far it was scrolled",
+                    "kept for 13 months",
+                ],
             ),
             (
                 "/fr/mentions-legales",
                 "fr",
                 "Mentions légales",
                 "/legal-notice",
-                ["configuré sans cookies", "conservées 13 mois"],
+                [
+                    "configuré sans cookies",
+                    "profondeur de défilement",
+                    "conservées 13 mois",
+                ],
             ),
         ] {
             let (status, _, body) = request(path).await;
