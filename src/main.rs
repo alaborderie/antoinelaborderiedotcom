@@ -412,8 +412,12 @@ mod tests {
                 "cookieless_mode: \"always\"",
                 "person_profiles: \"never\"",
                 "autocapture: false",
+                "capture_dead_clicks: false",
+                "capture_heatmaps: false",
+                "capture_performance: false",
                 "capture_exceptions: false",
                 "disable_session_recording: true",
+                "disable_surveys: true",
             ] {
                 assert!(body.contains(text), "{path}: missing {text}");
             }
