@@ -3,18 +3,18 @@
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const finePointer = window.matchMedia("(pointer: fine)");
   const sceneColors = {
-    signal: "#b9ff4a",
-    flow: "#b9ff4a",
-    capability: "#b9ff4a",
-    work: "#b9ff4a",
-    lab: "#4de4ff",
-    timeline: "#4de4ff",
-    contact: "#ff8c5a",
+    signal: "#3f6b00",
+    flow: "#3f6b00",
+    capability: "#3f6b00",
+    work: "#3f6b00",
+    lab: "#006c84",
+    timeline: "#006c84",
+    contact: "#ad4209",
   };
   const stageColors = {
-    peaksys: "#b9ff4a",
-    hellowork: "#4de4ff",
-    royalcanin: "#ff8c5a",
+    peaksys: "#3f6b00",
+    hellowork: "#006c84",
+    royalcanin: "#ad4209",
   };
 
   if (finePointer.matches && !reducedMotion.matches) {
