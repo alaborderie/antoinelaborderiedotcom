@@ -197,7 +197,6 @@ a:focus-visible {
 .accent-text {
   color: transparent;
   -webkit-text-stroke: 1.5px var(--scene);
-  text-shadow: 0 0 4rem color-mix(in srgb, var(--scene) 14%, transparent);
 }
 .threshold-bottom {
   margin-top: clamp(3rem, 8vh, 6rem);
