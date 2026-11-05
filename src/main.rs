@@ -13,7 +13,7 @@ const SITE_URL: &str = "https://antoinelaborderie.com";
 // Content revision date, not the date of the request or build.
 const LAST_MODIFIED: &str = "2026-11-05";
 // Bump when CSS, JavaScript or social images change, including same-day releases.
-const ASSET_VERSION: &str = "2026-11-05-2";
+const ASSET_VERSION: &str = "2026-10-23-1";
 
 #[derive(Template)]
 #[template(path = "index.html")]
