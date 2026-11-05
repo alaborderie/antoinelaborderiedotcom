@@ -4,7 +4,7 @@
     {
       "@type": "Person",
       "@id": "https://antoinelaborderie.com/#person",
-      "name": "Antoine Laborderie",
+      "name": "Antoine Etcheverry",
       "jobTitle": "Full-stack engineer · DevEx & AI · Agentic coding",
       "url": "https://antoinelaborderie.com/",
       "image": "https://antoinelaborderie.com/static/antoine-laborderie.webp",
@@ -15,7 +15,7 @@
       "@type": "WebSite",
       "@id": "https://antoinelaborderie.com/#website",
       "url": "https://antoinelaborderie.com/",
-      "name": "Antoine Laborderie",
+      "name": "Antoine Etcheverry",
       "inLanguage": ["en", "fr"],
       "publisher": { "@id": "https://antoinelaborderie.com/#person" }
     },

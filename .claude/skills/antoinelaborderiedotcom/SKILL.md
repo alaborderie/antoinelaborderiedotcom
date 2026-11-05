@@ -1,7 +1,7 @@
 ---
 name: antoinelaborderiedotcom
 description: >
-  Architecture and editing context for Antoine Laborderie's bilingual portfolio (antoinelaborderie.com). Use when updating its content, fixing the Rust/Axum/Askama application, or preparing its deployment.
+  Architecture and editing context for Antoine Etcheverry's bilingual portfolio (antoinelaborderie.com). Use when updating its content, fixing the Rust/Axum/Askama application, or preparing its deployment.
 metadata:
   author: alaborderie
   version: 1.1.1
@@ -17,7 +17,7 @@ Run every command from the repository root.
 
 ## Purpose
 
-Bilingual freelance portfolio (English at `/`, French at `/fr`) for Antoine Laborderie, a Bordeaux-based full-stack engineer focused on DevEx, AI, and agentic coding.
+Bilingual freelance portfolio (English at `/`, French at `/fr`) for Antoine Etcheverry, a Bordeaux-based full-stack engineer focused on DevEx, AI, and agentic coding.
 
 Public offer: fixed-price projects, quote on request. Contact is `mailto:antoine.laborderie@gmail.com` and the Malt profile. Keep that offer. The home-page tests reject the strings `€600` and `600 €`.
 

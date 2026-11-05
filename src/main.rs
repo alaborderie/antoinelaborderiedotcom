@@ -11,7 +11,7 @@ use tower_http::{compression::CompressionLayer, services::ServeDir};
 
 const SITE_URL: &str = "https://antoinelaborderie.com";
 // Content revision date, not the date of the request or build.
-const LAST_MODIFIED: &str = "2026-11-02";
+const LAST_MODIFIED: &str = "2026-11-05";
 // Bump when CSS, JavaScript or social images change, including same-day releases.
 const ASSET_VERSION: &str = "2026-10-23-1";
 
@@ -153,11 +153,11 @@ async fn english() -> Response {
     render(IndexTemplate {
         asset_version: ASSET_VERSION,
         lang: "en",
-        title: "Freelance DevEx & AI Engineer, Agentic Coding | Antoine Laborderie",
+        title: "Freelance DevEx & AI Engineer, Agentic Coding | Antoine Etcheverry",
         description: "Freelance full-stack engineer in Bordeaux, France: agentic coding workflows, AI integration, developer tooling. Fixed-price projects, English or French.",
         canonical: "https://antoinelaborderie.com/",
         og_locale: "en_GB",
-        og_image_alt: "Antoine Laborderie — Full-stack engineer · DevEx & AI · Agentic coding",
+        og_image_alt: "Antoine Etcheverry — Full-stack engineer · DevEx & AI · Agentic coding",
         is_french: false,
         json_ld: include_str!("structured_data/en.json"),
     })
@@ -166,11 +166,11 @@ async fn french() -> Response {
     render(IndexTemplate {
         asset_version: ASSET_VERSION,
         lang: "fr",
-        title: "Développeur freelance Bordeaux · DevEx & IA, agentic coding | Antoine Laborderie",
+        title: "Développeur freelance Bordeaux · DevEx & IA, agentic coding | Antoine Etcheverry",
         description: "Développeur Full Stack freelance à Bordeaux\u{a0}: workflows d’agentic coding, intégration IA, outillage DevEx (Backstage, Kubernetes). Projets au forfait.",
         canonical: "https://antoinelaborderie.com/fr",
         og_locale: "fr_FR",
-        og_image_alt: "Antoine Laborderie — Développeur Full Stack · DevEx & IA · Agentic coding",
+        og_image_alt: "Antoine Etcheverry — Développeur Full Stack · DevEx & IA · Agentic coding",
         is_french: true,
         json_ld: include_str!("structured_data/fr.json"),
     })
@@ -271,8 +271,10 @@ mod tests {
         assert_eq!(status, StatusCode::OK);
         assert!(en.contains("<html lang=\"en\""));
         assert!(
-            en.contains("Freelance DevEx &#38; AI Engineer, Agentic Coding | Antoine Laborderie")
+            en.contains("Freelance DevEx &#38; AI Engineer, Agentic Coding | Antoine Etcheverry")
         );
+        assert!(en.contains("AE<span>/</span>26"));
+        assert!(en.contains("Antoine Etcheverry · 2026"));
         assert!(en.contains("I build agentic coding workflows and internal tools"));
         assert!(en.contains("rel=\"canonical\" href=\"https://antoinelaborderie.com/\""));
         assert!(en.contains("property=\"og:type\" content=\"profile\""));
@@ -286,8 +288,10 @@ mod tests {
         assert_eq!(status, StatusCode::OK);
         assert!(fr.contains("<html lang=\"fr\""));
         assert!(fr.contains(
-            "Développeur freelance Bordeaux · DevEx &#38; IA, agentic coding | Antoine Laborderie"
+            "Développeur freelance Bordeaux · DevEx &#38; IA, agentic coding | Antoine Etcheverry"
         ));
+        assert!(fr.contains("AE<span>/</span>26"));
+        assert!(fr.contains("Antoine Etcheverry · 2026"));
         assert!(fr.contains("Je conçois des workflows d’agentic coding"));
         assert!(fr.contains("rel=\"canonical\" href=\"https://antoinelaborderie.com/fr\""));
         assert!(fr.contains("property=\"og:locale\" content=\"fr_FR\""));
@@ -376,7 +380,8 @@ mod tests {
             assert_eq!(status, StatusCode::OK);
             for text in [
                 heading,
-                "Antoine Laborderie",
+                "Antoine Laborderie EI",
+                "Antoine Etcheverry",
                 "844 240 168 00030",
                 "55 rue de la Peloue",
                 "33127 Saint-Jean-d’Illac",
@@ -628,7 +633,7 @@ mod tests {
                     entry.contains(&format!("<loc>https://antoinelaborderie.com{path}</loc>"))
                 })
                 .unwrap();
-            assert!(entry.contains("<lastmod>2026-11-02</lastmod>"));
+            assert!(entry.contains("<lastmod>2026-11-05</lastmod>"));
             for (lang, target) in [("en", en), ("fr", fr), ("x-default", en)] {
                 assert!(entry.contains(&format!(
                     "hreflang=\"{lang}\" href=\"https://antoinelaborderie.com{target}\""
@@ -733,7 +738,7 @@ mod tests {
         let end = document[start..].find("</script>").unwrap() + start;
         let value: serde_json::Value = serde_json::from_str(&document[start..end]).unwrap();
         assert_eq!(value["@context"], "https://schema.org");
-        assert_eq!(value["@graph"][0]["name"], "Antoine Laborderie");
+        assert_eq!(value["@graph"][0]["name"], "Antoine Etcheverry");
         value
     }
 }
