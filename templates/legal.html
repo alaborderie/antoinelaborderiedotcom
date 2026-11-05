@@ -1,7 +1,7 @@
 {% extends "page.html" %}
 {% block title %}{% if is_french %}Mentions légales{% else %}Legal notice{% endif %}{% endblock %}
 {% block metadata %}
-<meta name="description" content="{% if is_french %}Mentions légales, éditeur, hébergeur et mesure d’audience du site d’Antoine Etcheverry.{% else %}Publisher, hosting and audience measurement information for Antoine Etcheverry's website.{% endif %}" />
+<meta name="description" content="{% if is_french %}Mentions légales, éditeur, hébergeur et mesure d’audience du site d’Antoine Laborderie.{% else %}Publisher, hosting and audience measurement information for Antoine Laborderie's website.{% endif %}" />
 <link rel="canonical" href="{{ canonical }}" />
 <link rel="alternate" hreflang="en" href="https://antoinelaborderie.com/legal-notice" />
 <link rel="alternate" hreflang="fr" href="https://antoinelaborderie.com/fr/mentions-legales" />
@@ -15,13 +15,13 @@
 <h1>{% if is_french %}Mentions légales{% else %}Legal notice{% endif %}</h1>
 <section aria-labelledby="publisher-title">
   <h2 id="publisher-title">{% if is_french %}Éditeur{% else %}Publisher{% endif %}</h2>
-  <p>Antoine Laborderie EI, {% if is_french %}entrepreneur individuel{% else %}sole trader (entrepreneur individuel){% endif %}</p>
+  <p>Antoine Laborderie, {% if is_french %}entrepreneur individuel (EI){% else %}sole trader (entrepreneur individuel, EI){% endif %}</p>
   <dl>
     <dt>SIRET</dt><dd>844 240 168 00030</dd>
     <dt>{% if is_french %}Adresse{% else %}Address{% endif %}</dt>
     <dd>55 rue de la Peloue, 33127 Saint-Jean-d’Illac, France</dd>
     <dt>Contact</dt><dd><a href="mailto:antoine.laborderie@gmail.com">antoine.laborderie@gmail.com</a></dd>
-    <dt>{% if is_french %}Directeur de la publication{% else %}Publication director{% endif %}</dt><dd>Antoine Etcheverry</dd>
+    <dt>{% if is_french %}Directeur de la publication{% else %}Publication director{% endif %}</dt><dd>Antoine Laborderie</dd>
   </dl>
 </section>
 <section aria-labelledby="host-title">
