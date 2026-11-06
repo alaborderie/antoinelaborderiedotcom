@@ -1,0 +1,266 @@
+/*
+ * Shooting-star easter egg (home pages) and the /surprise celebration.
+ * Loaded next to styles.css; nothing here overrides the site's own rules.
+ */
+
+/* ---- Shooting star (/ and /fr) ------------------------------------------ */
+
+/*
+ * The star is the only element of the effect: no overlay, no full-screen
+ * layer. It sits under the fixed nav (z-index 50) and the skip link (100), and
+ * only its own 44px hit area takes pointer events.
+ */
+.ee-star {
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: -1.375rem 0 0 -1.375rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--paper, #f1eee5);
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transform: translate(var(--ee-x1, -10rem), var(--ee-y1, -10rem));
+  animation: ee-star-fly var(--ee-duration, 4.5s) linear both;
+}
+.ee-star[hidden] {
+  display: none;
+}
+/* Hovered or focused, the star waits for the visitor, fully visible. */
+.ee-star:hover,
+.ee-star:focus-visible {
+  animation-play-state: paused;
+  opacity: 1 !important;
+}
+.ee-star:focus-visible {
+  outline: 2px solid var(--signal, #b9ff4a);
+  outline-offset: 2px;
+}
+.ee-star-head {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin: -0.2rem 0 0 -0.2rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow:
+    0 0 0.4rem 0.1rem rgba(241, 238, 229, 0.75),
+    0 0 1rem 0.2rem rgba(185, 255, 74, 0.35);
+}
+.ee-star-tail {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7rem;
+  height: 1px;
+  margin-top: -0.5px;
+  transform-origin: 0 50%;
+  transform: rotate(var(--ee-tail-angle, -20deg));
+  background: linear-gradient(
+    to right,
+    rgba(241, 238, 229, 0.7),
+    rgba(185, 255, 74, 0.18) 45%,
+    transparent
+  );
+  pointer-events: none;
+}
+.ee-star:hover .ee-star-head,
+.ee-star:focus-visible .ee-star-head {
+  box-shadow:
+    0 0 0.5rem 0.15rem rgba(241, 238, 229, 0.9),
+    0 0 1.4rem 0.35rem rgba(185, 255, 74, 0.5);
+}
+@keyframes ee-star-fly {
+  from {
+    transform: translate(var(--ee-x0), var(--ee-y0));
+    opacity: 0;
+  }
+  8%,
+  88% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--ee-x1), var(--ee-y1));
+    opacity: 0;
+  }
+}
+
+/*
+ * Reduced motion: the star does not travel. It rests in the top-right
+ * corner, under the nav, and easter-egg.js hides it again after a while.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .ee-star {
+    top: 6rem;
+    right: 7rem;
+    left: auto;
+    margin: 0;
+    transform: none;
+    animation: none !important;
+  }
+  .ee-star .ee-star-tail {
+    width: 4rem;
+    transform: rotate(-20deg);
+  }
+}
+@media print {
+  .ee-star {
+    display: none !important;
+  }
+}
+
+/* ---- /surprise ------------------------------------------------------------ */
+
+/* Above the confetti layer, so a piece never sits on the text. */
+.ee-surprise {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+.ee-surprise h1 {
+  text-wrap: balance;
+}
+.ee-surprise .error-actions {
+  justify-content: center;
+}
+.ee-trophy {
+  position: relative;
+  display: inline-block;
+  width: 5rem;
+  height: 5rem;
+  margin-top: 1rem;
+  color: var(--signal, #b9ff4a);
+}
+.ee-trophy svg {
+  width: 100%;
+  height: 100%;
+  animation: ee-pop 0.9s var(--ease, ease-out) both;
+}
+.ee-trophy i {
+  position: absolute;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--paper, #f1eee5);
+  clip-path: polygon(
+    50% 0,
+    62% 38%,
+    100% 50%,
+    62% 62%,
+    50% 100%,
+    38% 62%,
+    0 50%,
+    38% 38%
+  );
+  animation: ee-twinkle 1.6s ease-in-out 4 both;
+}
+.ee-trophy i:nth-child(2) {
+  top: -0.4rem;
+  left: -1rem;
+}
+.ee-trophy i:nth-child(3) {
+  top: 0.6rem;
+  right: -1.4rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  animation-delay: 0.4s;
+}
+.ee-trophy i:nth-child(4) {
+  bottom: 0;
+  left: -1.6rem;
+  width: 0.35rem;
+  height: 0.35rem;
+  animation-delay: 0.8s;
+}
+
+/*
+ * Confetti: decorative, fixed, never clickable. Pieces keep to the side
+ * gutters and the top band so they stay off the text. Each piece rests at its
+ * own spot; the animation only drops it in from above, then stops.
+ */
+.ee-confetti {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ee-confetti i {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  width: 0.45rem;
+  height: 0.9rem;
+  background: var(--c, var(--signal, #b9ff4a));
+  opacity: 0.85;
+  transform: rotate(var(--r, 20deg));
+  animation: ee-fall 2.6s cubic-bezier(0.25, 0.7, 0.4, 1) var(--d, 0s) both;
+}
+.ee-confetti i:nth-child(3n) {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+}
+.ee-confetti i:nth-child(4n) {
+  clip-path: polygon(
+    50% 0,
+    62% 38%,
+    100% 50%,
+    62% 62%,
+    50% 100%,
+    38% 62%,
+    0 50%,
+    38% 38%
+  );
+  width: 0.9rem;
+  height: 0.9rem;
+}
+@keyframes ee-fall {
+  from {
+    transform: translateY(-110vh) rotate(0deg);
+  }
+  to {
+    transform: translateY(0) rotate(var(--r, 20deg));
+  }
+}
+@keyframes ee-pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes ee-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ee-trophy svg,
+  .ee-trophy i,
+  .ee-confetti i {
+    animation: none !important;
+  }
+  .ee-trophy i {
+    opacity: 0.8;
+  }
+}
