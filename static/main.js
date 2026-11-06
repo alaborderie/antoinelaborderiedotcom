@@ -17,6 +17,24 @@
     hellowork: "var(--cyan)",
     royalcanin: "var(--orange)",
   };
+  const revealSelector = [
+    ".concept-section > .scene-number",
+    ".services-heading",
+    ".services-grid > article",
+    ".service-process",
+    ".manifesto-grid > *",
+    ".flow-map",
+    ".capability-core",
+    ".capability-nodes > button",
+    ".work-scene",
+    ".lab-heading",
+    ".lab-grid > *",
+    ".timeline-pulse > h2",
+    ".timeline-pulse li",
+    ".final-signal h2",
+    ".final-grid > *",
+  ].join(",");
+  const maxStagger = 5;
 
   if (finePointer.matches && motionAllowed) {
     document.body.classList.add("has-pointer");
@@ -34,6 +52,25 @@
       },
       { passive: true },
     );
+  }
+
+  if (motionAllowed && "IntersectionObserver" in window) {
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries
+          .filter((entry) => entry.isIntersecting)
+          .forEach((entry, order) => {
+            entry.target.style.setProperty("--i", Math.min(order, maxStagger));
+            entry.target.classList.add("is-revealed");
+            revealObserver.unobserve(entry.target);
+          });
+      },
+      { rootMargin: "0px 0px -8% 0px" },
+    );
+    document.querySelectorAll(revealSelector).forEach((element) => {
+      element.classList.add("will-reveal");
+      revealObserver.observe(element);
+    });
   }
 
   const sections = [...document.querySelectorAll("[data-scene]")];

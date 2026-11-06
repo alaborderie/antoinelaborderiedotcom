@@ -17,6 +17,7 @@
   --dur-press: 160ms;
   --dur: 320ms;
   --dur-reveal: 900ms;
+  --stagger: 80ms;
   --interactive:
     color var(--dur) var(--ease-out),
     background-color var(--dur) var(--ease-out),
@@ -1118,6 +1119,13 @@ details[open] summary span {
   }
   .studio-js .threshold-bottom {
     animation-delay: 0.22s;
+  }
+  .will-reveal:not(.is-revealed) {
+    opacity: 0;
+  }
+  .is-revealed {
+    animation: rise var(--dur-reveal) var(--ease-out)
+      calc(var(--i, 0) * var(--stagger)) backwards;
   }
   .button-primary:hover,
   .button-secondary:hover,
