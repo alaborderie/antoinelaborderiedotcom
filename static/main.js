@@ -2,22 +2,23 @@
   const root = document.documentElement;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const finePointer = window.matchMedia("(pointer: fine)");
+  const motionAllowed = !reducedMotion.matches;
   const sceneColors = {
-    signal: "#b9ff4a",
-    flow: "#b9ff4a",
-    capability: "#b9ff4a",
-    work: "#b9ff4a",
-    lab: "#4de4ff",
-    timeline: "#4de4ff",
-    contact: "#ff8c5a",
+    signal: "var(--signal)",
+    flow: "var(--signal)",
+    capability: "var(--signal)",
+    work: "var(--signal)",
+    lab: "var(--cyan)",
+    timeline: "var(--cyan)",
+    contact: "var(--orange)",
   };
   const stageColors = {
-    peaksys: "#b9ff4a",
-    hellowork: "#4de4ff",
-    royalcanin: "#ff8c5a",
+    peaksys: "var(--signal)",
+    hellowork: "var(--cyan)",
+    royalcanin: "var(--orange)",
   };
 
-  if (finePointer.matches && !reducedMotion.matches) {
+  if (finePointer.matches && motionAllowed) {
     document.body.classList.add("has-pointer");
     let rafPending = false;
     window.addEventListener(
@@ -80,7 +81,7 @@
         ?.style.setProperty("--scene", color);
       meter?.style.setProperty(
         "--stage-progress",
-        `${((index + 1) / workScenes.length) * 100}%`,
+        String((index + 1) / workScenes.length),
       );
     },
     { rootMargin: "-18% 0px -45%", threshold: [0, 0.2, 0.5] },
