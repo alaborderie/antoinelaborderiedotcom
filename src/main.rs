@@ -13,7 +13,7 @@ const SITE_URL: &str = "https://antoinelaborderie.com";
 // Content revision date, not the date of the request or build.
 const LAST_MODIFIED: &str = "2026-11-02";
 // Bump when CSS, JavaScript or social images change, including same-day releases.
-const ASSET_VERSION: &str = "2026-10-23-1";
+const ASSET_VERSION: &str = "2026-11-06-1";
 
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -38,6 +38,12 @@ struct LegalTemplate {
 }
 
 #[derive(Template)]
+#[template(path = "surprise.html")]
+struct SurpriseTemplate {
+    asset_version: &'static str,
+}
+
+#[derive(Template)]
 #[template(path = "404.html")]
 struct NotFoundTemplate {
     asset_version: &'static str,
@@ -50,6 +56,7 @@ fn app() -> Router {
         .route("/fr", get(french))
         .route("/legal-notice", get(legal_english))
         .route("/fr/mentions-legales", get(legal_french))
+        .route("/surprise", get(surprise))
         .route(
             "/legal-notice/",
             get(|| async { Redirect::permanent("/legal-notice") }),
@@ -189,6 +196,14 @@ async fn legal_french() -> Response {
         asset_version: ASSET_VERSION,
         is_french: true,
         canonical: "https://antoinelaborderie.com/fr/mentions-legales",
+    })
+}
+
+// Reached from the shooting-star easter egg on the home pages. Kept out of the
+// sitemap and marked noindex in its template.
+async fn surprise() -> Response {
+    render(SurpriseTemplate {
+        asset_version: ASSET_VERSION,
     })
 }
 
