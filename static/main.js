@@ -2,6 +2,7 @@
   const root = document.documentElement;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const finePointer = window.matchMedia("(pointer: fine)");
+  const wideScreen = window.matchMedia("(min-width: 901px)");
   const motionAllowed = !reducedMotion.matches;
   const sceneColors = {
     signal: "var(--signal)",
@@ -35,6 +36,7 @@
     ".final-grid > *",
   ].join(",");
   const maxStagger = 5;
+  const parallaxDistance = 14;
 
   if (finePointer.matches && motionAllowed) {
     document.body.classList.add("has-pointer");
@@ -71,6 +73,37 @@
       element.classList.add("will-reveal");
       revealObserver.observe(element);
     });
+  }
+
+  const parallaxTargets = [
+    ...document.querySelectorAll(".signal-orbit, .scene-visual"),
+  ];
+  if (motionAllowed && wideScreen.matches && parallaxTargets.length) {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const viewport = window.innerHeight;
+      const containers = parallaxTargets.map((target) =>
+        target.parentElement.getBoundingClientRect(),
+      );
+      containers.forEach((rect, index) => {
+        if (rect.bottom < 0 || rect.top > viewport) return;
+        const offset = (rect.top + rect.height / 2 - viewport / 2) / viewport;
+        const shift = Math.max(-1, Math.min(1, offset)) * -parallaxDistance;
+        parallaxTargets[index].style.setProperty(
+          "--parallax",
+          `${shift.toFixed(1)}px`,
+        );
+      });
+    };
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (!frame) frame = requestAnimationFrame(update);
+      },
+      { passive: true },
+    );
+    update();
   }
 
   const sections = [...document.querySelectorAll("[data-scene]")];

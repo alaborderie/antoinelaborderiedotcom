@@ -1158,6 +1158,12 @@ details[open] summary span {
     translate: 0.5rem 0;
   }
 }
+@media screen and (min-width: 901px) and (prefers-reduced-motion: no-preference) {
+  .signal-orbit,
+  .scene-visual {
+    translate: 0 var(--parallax, 0px);
+  }
+}
 @media (max-width: 900px) {
   .concept-nav {
     grid-template-columns: 1fr auto;
