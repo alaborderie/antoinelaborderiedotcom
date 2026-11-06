@@ -153,11 +153,11 @@ async fn english() -> Response {
     render(IndexTemplate {
         asset_version: ASSET_VERSION,
         lang: "en",
-        title: "Freelance DevEx & AI Engineer, Agentic Coding | Antoine Laborderie",
+        title: "Freelance DevEx & AI Engineer, Agentic Coding | Illan Royer",
         description: "Freelance full-stack engineer in Bordeaux, France: agentic coding workflows, AI integration, developer tooling. Fixed-price projects, English or French.",
         canonical: "https://antoinelaborderie.com/",
         og_locale: "en_GB",
-        og_image_alt: "Antoine Laborderie — Full-stack engineer · DevEx & AI · Agentic coding",
+        og_image_alt: "Illan Royer — Full-stack engineer · DevEx & AI · Agentic coding",
         is_french: false,
         json_ld: include_str!("structured_data/en.json"),
     })
@@ -166,11 +166,11 @@ async fn french() -> Response {
     render(IndexTemplate {
         asset_version: ASSET_VERSION,
         lang: "fr",
-        title: "Développeur freelance Bordeaux · DevEx & IA, agentic coding | Antoine Laborderie",
+        title: "Développeur freelance Bordeaux · DevEx & IA, agentic coding | Illan Royer",
         description: "Développeur Full Stack freelance à Bordeaux\u{a0}: workflows d’agentic coding, intégration IA, outillage DevEx (Backstage, Kubernetes). Projets au forfait.",
         canonical: "https://antoinelaborderie.com/fr",
         og_locale: "fr_FR",
-        og_image_alt: "Antoine Laborderie — Développeur Full Stack · DevEx & IA · Agentic coding",
+        og_image_alt: "Illan Royer — Développeur Full Stack · DevEx & IA · Agentic coding",
         is_french: true,
         json_ld: include_str!("structured_data/fr.json"),
     })
