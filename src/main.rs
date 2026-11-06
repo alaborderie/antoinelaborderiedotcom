@@ -742,6 +742,88 @@ mod tests {
         }
     }
 
+    #[tokio::test]
+    async fn home_pages_load_the_shooting_star_easter_egg() {
+        for path in ["/", "/fr"] {
+            let (_, _, body) = request(path).await;
+            assert!(
+                body.contains(&format!(
+                    "<link rel=\"stylesheet\" href=\"/static/easter-egg.css?v={ASSET_VERSION}\" />"
+                )),
+                "{path}: missing easter-egg.css"
+            );
+            assert!(
+                body.contains(&format!(
+                    "<script src=\"/static/easter-egg.js?v={ASSET_VERSION}\" defer></script>"
+                )),
+                "{path}: missing easter-egg.js"
+            );
+        }
+        for path in [
+            "/legal-notice",
+            "/fr/mentions-legales",
+            "/missing",
+            "/surprise",
+        ] {
+            let (_, _, body) = request(path).await;
+            assert!(!body.contains("easter-egg.js"), "{path}: loads the star");
+        }
+
+        let (status, headers, script) = request("/static/easter-egg.js").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(headers[header::CACHE_CONTROL], "public, max-age=86400");
+        for text in [
+            "document.createElement(\"button\")",
+            "star.type = \"button\"",
+            "\"aria-label\"",
+            "Shooting star: a surprise awaits",
+            "Étoile filante : une surprise vous attend",
+            "(prefers-reduced-motion: reduce)",
+            "window.location.assign(\"/surprise\")",
+        ] {
+            assert!(script.contains(text), "easter-egg.js: missing {text}");
+        }
+        assert!(!script.contains("posthog"));
+
+        let (status, _, styles) = request("/static/easter-egg.css").await;
+        assert_eq!(status, StatusCode::OK);
+        for text in [
+            ".ee-star:focus-visible",
+            "@media (prefers-reduced-motion: reduce)",
+            "animation: none !important",
+            "pointer-events: none",
+        ] {
+            assert!(styles.contains(text), "easter-egg.css: missing {text}");
+        }
+    }
+
+    #[tokio::test]
+    async fn serves_a_noindex_surprise_page_outside_the_sitemap() {
+        let (status, headers, body) = request("/surprise").await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(headers[header::CONTENT_TYPE], "text/html; charset=utf-8");
+        assert_eq!(headers[header::CACHE_CONTROL], "public, max-age=300");
+        assert!(body.contains("<html lang=\"fr\""));
+        assert!(body.contains("<h1>Bravo, vous avez gagné !</h1>"));
+        assert!(body.contains("<meta name=\"robots\" content=\"noindex\" />"));
+        assert!(body.contains("class=\"button-primary\" href=\"/\""));
+        assert!(body.contains("class=\"ee-confetti\" aria-hidden=\"true\""));
+        for asset in ["styles.css", "easter-egg.css"] {
+            assert!(body.contains(&format!("href=\"/static/{asset}?v={ASSET_VERSION}\"")));
+        }
+        assert!(
+            !body.contains("<script"),
+            "the surprise page needs no script"
+        );
+        assert!(!body.contains("i.posthog.com"));
+        assert!(!body.contains("rel=\"canonical\""));
+
+        let (_, _, xml) = request("/sitemap.xml").await;
+        assert!(!xml.contains("surprise"));
+        let (_, _, robots) = request("/robots.txt").await;
+        assert!(!robots.contains("surprise"));
+    }
+
     fn assert_json_ld_is_valid(document: &str) -> serde_json::Value {
         let marker = "<script type=\"application/ld+json\">";
         let start = document.find(marker).unwrap() + marker.len();
