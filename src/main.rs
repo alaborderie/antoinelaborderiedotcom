@@ -270,9 +270,7 @@ mod tests {
         let (status, _, en) = request("/").await;
         assert_eq!(status, StatusCode::OK);
         assert!(en.contains("<html lang=\"en\""));
-        assert!(
-            en.contains("Freelance DevEx &#38; AI Engineer, Agentic Coding | Antoine Laborderie")
-        );
+        assert!(en.contains("Freelance DevEx &#38; AI Engineer, Agentic Coding | Illan Royer"));
         assert!(en.contains("I build agentic coding workflows and internal tools"));
         assert!(en.contains("rel=\"canonical\" href=\"https://antoinelaborderie.com/\""));
         assert!(en.contains("property=\"og:type\" content=\"profile\""));
@@ -286,7 +284,7 @@ mod tests {
         assert_eq!(status, StatusCode::OK);
         assert!(fr.contains("<html lang=\"fr\""));
         assert!(fr.contains(
-            "Développeur freelance Bordeaux · DevEx &#38; IA, agentic coding | Antoine Laborderie"
+            "Développeur freelance Bordeaux · DevEx &#38; IA, agentic coding | Illan Royer"
         ));
         assert!(fr.contains("Je conçois des workflows d’agentic coding"));
         assert!(fr.contains("rel=\"canonical\" href=\"https://antoinelaborderie.com/fr\""));
@@ -376,7 +374,7 @@ mod tests {
             assert_eq!(status, StatusCode::OK);
             for text in [
                 heading,
-                "Antoine Laborderie",
+                "Illan Royer",
                 "844 240 168 00030",
                 "55 rue de la Peloue",
                 "33127 Saint-Jean-d’Illac",
@@ -733,7 +731,7 @@ mod tests {
         let end = document[start..].find("</script>").unwrap() + start;
         let value: serde_json::Value = serde_json::from_str(&document[start..end]).unwrap();
         assert_eq!(value["@context"], "https://schema.org");
-        assert_eq!(value["@graph"][0]["name"], "Antoine Laborderie");
+        assert_eq!(value["@graph"][0]["name"], "Illan Royer");
         value
     }
 }
