@@ -58,7 +58,7 @@ grep -q "; answered: none$" "$WORK/probe.log" || broke "an off-site request got 
 
 changed=
 if grep -q '^MISMATCH ' "$WORK/probe.log"; then
-  echo "CHANGED: MODEL OUT OF DATE, the real page no longer goes through the zones or options of ScrollTracking.tla"
+  echo "CHANGED: MODEL OUT OF DATE, the real page no longer follows ScrollTracking.tla (zones, observer options or callback, see MISMATCH above)"
   changed="$changed model-out-of-date"
 fi
 for id in $KNOWN_IDS; do
