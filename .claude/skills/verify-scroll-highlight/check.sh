@@ -62,7 +62,7 @@ if grep -q '^MISMATCH ' "$WORK/probe.log"; then
   changed="$changed model-out-of-date"
 fi
 for id in $KNOWN_IDS; do
-  grep -q "^$id REPRODUCED " "$WORK/probe.log" || { echo "CHANGED $id: the replay on the real page no longer reproduces it"; changed="$changed $id-replay"; }
+  grep -q "^$id REPRODUCED " "$WORK/probe.log" || { echo "CHANGED $id: the replay on the real page did not reproduce it (NOT REPRODUCED or NOT RUN above)"; changed="$changed $id-replay"; }
 done
 
 cp "$SKILL/ScrollTracking.tla" "$SKILL/stage.cfg" "$SKILL/scene.cfg" "$WORK/"
