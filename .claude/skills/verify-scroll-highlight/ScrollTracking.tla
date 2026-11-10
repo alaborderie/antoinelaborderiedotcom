@@ -3,15 +3,15 @@
 (* The "which part of the page am I reading" highlight of static/main.js. *)
 (*                                                                         *)
 (* Two IntersectionObservers pick the highlighted section:                 *)
-(*  - stageObserver (main.js:59-88): Selected work stages, rootMargin       *)
+(*  - stageObserver (main.js:62-100): Selected work stages, rootMargin       *)
 (*    "-18% 0px -45%", thresholds [0, 0.2, 0.5]; sets aria-current         *)
 (*    ="location" on the matching [data-stage-link] and the stage meter.    *)
-(*  - sectionObserver (main.js:39-54): [data-scene] sections, rootMargin    *)
+(*  - sectionObserver (main.js:38-60): [data-scene] sections, rootMargin    *)
 (*    "-30% 0px -45%", thresholds [0, 0.25, 0.5]; sets                      *)
 (*    body[data-active-scene] and --scene.                                  *)
-(* Both callbacks do the same thing with the entries they receive:         *)
-(*   visible = entries.filter(isIntersecting).sort(by ratio desc)[0];       *)
-(*   if (!visible) return;  highlight = visible.target                      *)
+(* Both callbacks update a Set of every target currently in the band.     *)
+(* Keep the active target while it is in that Set, otherwise select the    *)
+(* first member in document order. If empty, leave the DOM unchanged.      *)
 (* An entry exists only for a target whose (isIntersecting, threshold      *)
 (* index) changed since the last notification (W3C IntersectionObserver,   *)
 (* "run the update intersection observations steps").                      *)
@@ -84,13 +84,12 @@ vars == <<zone, lit, was, moved>>
 
 InBand(z) == {t \in T : Zones[z][t] # "out"}
 
-\* The callback on a batch of entries for targets E, read in zone z.
-\* sort(by ratio desc)[0]: a "high" entry beats a "low" one; between two entries of the
-\* same rank the model lets either win (their exact ratios are not modeled).
+\* The Set equals InBand(z) after applying the delivered entries E.
+\* Ratios trigger notifications but do not choose the active target.
 Pick(E, z, old) ==
-    LET vis == {t \in E : Zones[z][t] # "out"}
-    IN IF vis = {} THEN {old}
-       ELSE {t \in vis : \A u \in vis : Rank(Zones[z][u]) <= Rank(Zones[z][t])}
+    LET vis == InBand(z)
+    IN IF vis = {} \/ old \in vis THEN {old}
+       ELSE {CHOOSE t \in vis : \A u \in vis : Order(t) <= Order(u)}
 
 \* observe() delivers a first entry for every target (page load or restored scroll position).
 Init ==

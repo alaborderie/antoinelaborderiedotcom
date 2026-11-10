@@ -36,13 +36,19 @@
   }
 
   const sections = [...document.querySelectorAll("[data-scene]")];
+  const sectionsInBand = new Set();
+  let activeSection;
   const sectionObserver = new IntersectionObserver(
     (entries) => {
-      const visible = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (!visible) return;
-      const scene = visible.target.dataset.scene;
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) sectionsInBand.add(entry.target);
+        else sectionsInBand.delete(entry.target);
+      });
+      if (!sectionsInBand.has(activeSection)) {
+        activeSection = sections.find((section) => sectionsInBand.has(section));
+      }
+      if (!activeSection) return;
+      const scene = activeSection.dataset.scene;
       document.body.dataset.activeScene = scene;
       root.style.setProperty(
         "--scene",
@@ -56,14 +62,20 @@
   const workScenes = [...document.querySelectorAll("[data-stage]")];
   const stageLinks = [...document.querySelectorAll("[data-stage-link]")];
   const meter = document.querySelector(".stage-meter i");
+  const stagesInBand = new Set();
+  let activeStage;
   const stageObserver = new IntersectionObserver(
     (entries) => {
-      const active = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (!active) return;
-      const key = active.target.dataset.stage;
-      const index = workScenes.indexOf(active.target);
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) stagesInBand.add(entry.target);
+        else stagesInBand.delete(entry.target);
+      });
+      if (!stagesInBand.has(activeStage)) {
+        activeStage = workScenes.find((scene) => stagesInBand.has(scene));
+      }
+      if (!activeStage) return;
+      const key = activeStage.dataset.stage;
+      const index = workScenes.indexOf(activeStage);
       stageLinks.forEach((link) => {
         const isActive = link.dataset.stageLink === key;
         link.classList.toggle("is-active", isActive);
@@ -75,7 +87,7 @@
       });
       const color = stageColors[key] ?? sceneColors.signal;
       root.style.setProperty("--scene", color);
-      active.target
+      activeStage
         .closest(".project-stage")
         ?.style.setProperty("--scene", color);
       meter?.style.setProperty(

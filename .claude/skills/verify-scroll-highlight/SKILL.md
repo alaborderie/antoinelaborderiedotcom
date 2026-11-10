@@ -13,10 +13,10 @@ description: Model-check (TLA+/TLC) the "you are here" highlight that static/mai
 
 `ScrollTracking.tla` models one IntersectionObserver callback of `static/main.js`:
 
-- `stageObserver` (`static/main.js:56-88`): targets `[data-stage]`, `rootMargin: "-18% 0px -45%"`, `threshold: [0, 0.2, 0.5]`; sets `aria-current`/`is-active` on `[data-stage-link]`, `--scene`, the stage meter.
-- `sectionObserver` (`static/main.js:38-54`): targets `[data-scene]`, `rootMargin: "-30% 0px -45%"`, `threshold: [0, 0.25, 0.5]`; sets `body.dataset.activeScene` and `--scene`.
+- `stageObserver` (`static/main.js:62-100`): targets `[data-stage]`, `rootMargin: "-18% 0px -45%"`, `threshold: [0, 0.2, 0.5]`; sets `aria-current`/`is-active` on `[data-stage-link]`, `--scene`, the stage meter.
+- `sectionObserver` (`static/main.js:38-60`): targets `[data-scene]`, `rootMargin: "-30% 0px -45%"`, `threshold: [0, 0.25, 0.5]`; sets `body.dataset.activeScene` and `--scene`.
 
-Both run `entries.filter(isIntersecting).sort(ratio desc)[0]` and `return` when nothing is left (`main.js:41-44`, `61-64`). The browser only delivers entries for targets whose (isIntersecting, threshold index) changed (W3C IntersectionObserver). The model abstracts scroll position to the ordered "zones" in which every target keeps the same state (`out`, `low` = in the band below the middle threshold, `high`). The zone tables `StageZones`, `Stage2Zones` (first two stages, for a readable chart) and `SceneZones` are the sequences the real page goes through in Chromium at 1280x800. `probe.mjs` re-derives them on every run and reports a mismatch when they differ. One model step = one rendering update that moves by one zone, followed by its callback.
+Both maintain a `Set` of targets currently intersecting the band. Each callback applies every delivered entry to that set, retains its active target while it is still in the set, and otherwise chooses the first member in document order. If the set is empty, the DOM highlight is retained until a target enters. Intersection ratios only trigger callbacks; they do not select the highlight. The browser only delivers entries for targets whose (isIntersecting, threshold index) changed (W3C IntersectionObserver). The model abstracts scroll position to the ordered "zones" in which every target keeps the same state (`out`, `low` = in the band below the middle threshold, `high`). The zone tables `StageZones`, `Stage2Zones` (first two stages, for a readable chart) and `SceneZones` are the sequences the real page goes through in Chromium at 1280x800. `probe.mjs` re-derives them on every run and reports a mismatch when they differ. One model step = one rendering update that moves by one zone, followed by its callback.
 
 The probe also ties `Pick()` to the real callbacks: it scrolls the page down and back up in 8 px steps and, at every step, checks that the real highlight is one `Pick()` allows for that zone change (and that it does not move within a zone). Steps where a section outside the scene model's three-scene window (`capability`, `work`, `lab`) is in the band are outside the model and skipped; the probe prints how many.
 
@@ -29,7 +29,7 @@ Rules (INVARIANTS):
 
 ## Does my change touch this?
 
-Yes if the diff touches `static/main.js` lines 38-88, any `data-scene`, `data-stage`, `data-stage-link` or `.stage-meter` markup in `templates/content/en.html` or `templates/content/fr.html`, or CSS in `static/styles.css` that changes the height, padding or gaps of `.concept-section`, `.threshold`, `.project-stage` or the stage articles.
+Yes if the diff touches `static/main.js` lines 38-100, any `data-scene`, `data-stage`, `data-stage-link` or `.stage-meter` markup in `templates/content/en.html` or `templates/content/fr.html`, or CSS in `static/styles.css` that changes the height, padding or gaps of `.concept-section`, `.threshold`, `.project-stage` or the stage articles.
 
 ## Tools
 
@@ -59,7 +59,7 @@ export PW_CORE=/path/to/node_modules/playwright-core CHROME=/path/to/chrome-head
 .claude/skills/verify-scroll-highlight/check.sh
 ```
 
-It checks the working tree as it is on disk, committed or not. It copies the tracked and untracked files (never ignored files, never `.env*`) to a new `mktemp -d` directory, changes only the copy's bind address to 127.0.0.1 on a free port between 20000 and 32000, builds there (debug, `CARGO_TARGET_DIR` inside it), serves it, probes it, stops it, and deletes the build output at exit. Nothing is written into the checkout. About 165 s: the build, an 8 px scroll scan of the home page down and back up, three replays, two TLC runs (`-workers 1`, `-Xmx2g -XX:+UseParallelGC`, under `timeout 300`, 61 and 25 distinct states).
+It checks the working tree as it is on disk, committed or not. It copies the tracked and untracked files (never ignored files, never `.env*`) to a new `mktemp -d` directory, changes only the copy's bind address to 127.0.0.1 on a free port between 20000 and 32000, builds there (debug, `CARGO_TARGET_DIR` inside it), serves it, probes it, stops it, and deletes the build output at exit. Nothing is written into the checkout. About 165 s: the build, an 8 px scroll scan of the home page down and back up, three replays, two TLC runs (`-workers 1`, `-Xmx2g -XX:+UseParallelGC`, under `timeout 300`, 51 and 17 distinct states).
 
 Isolation: Chromium runs with `--host-resolver-rules` that leave only 127.0.0.1 resolvable, so the page's PostHog script never loads and no event leaves the machine. The probe prints the off-site hosts the page tried and which answered; an answer stops the check with exit 3. No secret and no `.env` is read.
 
@@ -70,20 +70,20 @@ ZONES stage OK: the page goes through the model's 13 zones in order
 ZONES scene OK: the page goes through the model's 5 zones in order
 CALLBACK stage OK: on 24 zone changes (down and up) and every step between, the real highlight is one Pick() allows (0 steps outside the window skipped)
 CALLBACK scene OK: on 8 zone changes (down and up) and every step between, the real highlight is one Pick() allows (42 steps outside the window skipped)
-C1 REPRODUCED stage/HighlightNeverGoesBack: zones 3 -> 4 -> 5, highlight peaksys -> hellowork -> peaksys
-C2 REPRODUCED stage/HighlightIsOnScreen: zones 3 -> 4 -> 3, highlight peaksys -> hellowork -> hellowork
-C3 REPRODUCED scene/HighlightIsOnScreen: zones 1 -> 2 -> 1, highlight capability -> work -> work
+C1 FIXED stage/HighlightNeverGoesBack: zones 3 -> 4 -> 5, highlight peaksys -> peaksys -> peaksys
+C2 FIXED stage/HighlightIsOnScreen: zones 3 -> 4 -> 3, highlight peaksys -> peaksys -> peaksys
+C3 FIXED scene/HighlightIsOnScreen: zones 1 -> 2 -> 1, highlight capability -> capability -> capability
 off-site hosts the page tried: eu-assets.i.posthog.com; answered: none
-SAME    stage.cfg: breaks [ HighlightIsOnScreen HighlightNeverGoesBack ] = known findings C1 C2 (61 distinct states found)
-SAME    scene.cfg: breaks [ HighlightIsOnScreen ] = known findings C3 (25 distinct states found)
-RESULT: EXPECTED; known findings C1 C2 C3 still reproduce (TLC and replay) and every other rule holds
+SAME    stage.cfg: breaks [  ] = known findings none (see run for state count)
+SAME    scene.cfg: breaks [  ] = known findings none (see run for state count)
+RESULT: EXPECTED; known findings none; fixed replays pass and every rule holds
 ```
 
 Exit status:
 
 | Exit | Final line starts with | Meaning |
 |---|---|---|
-| 0 | `RESULT: EXPECTED` | The page still goes through the model's zones, its callbacks still pick what `Pick()` allows, C1 to C3 still reproduce on the real page, TLC breaks exactly the known rules. The state of the code today. |
+| 0 | `RESULT: EXPECTED` | The page follows the model zones and `Pick()`, C1 to C3 follow the fixed replay expectations, and TLC finds no invariant violation. |
 | 1 | `RESULT: CHANGED (...)` | `model-out-of-date` (zones, observer options or a callback's choice differ from the model: TLC's answer would be about another page), `Cn-replay` (the real page no longer follows that known path), or `stage.cfg`/`scene.cfg` (TLC breaks other rules). |
 | 2 | `RESULT: TOOLING MISSING (...)` | A tool above is missing. Nothing was checked. |
 | 3 | `RESULT: CHECK FAILED (...)` | The copy does not build, the server did not start, the probe crashed, TLC did not finish, or the isolation leaked. |
@@ -98,15 +98,9 @@ Read every TLC result with the `/statechart` skill on `ScrollTracking.tla`, a co
 
 ## Known findings at the sync commit
 
-All replayed in Chrome Headless Shell 156 on the real page:
+None. C1, C2 and C3 are retired. The original batch-only callbacks reproduced all three on main at `1023914`; the fixed callbacks pass the same paths. `FIXED_IDS` in `check.sh` requires each replay to print `FIXED`. The expected broken-rule lists for both configs are empty. No rule or zone bound was weakened.
 
-1. **C1**, `stage.cfg`, `HighlightNeverGoesBack`: (0) reading Peaksys, highlight Peaksys; (1) you scroll down, HelloWork enters the band, highlight HelloWork; (2) you scroll down, Peaksys drops under 20 % of its height in the band and its entry is the only one delivered, highlight back on Peaksys. Zones 3 -> 4 -> 5.
-2. **C2**, `stage.cfg`, `HighlightIsOnScreen`: (0) reading Peaksys; (1) you scroll down, highlight HelloWork; (2) you scroll back up, HelloWork leaves the band, its entry is not intersecting, the callback returns early: `aria-current="location"` stays on HelloWork while only Peaksys is in view. Zones 3 -> 4 -> 3.
-3. **C3**, `scene.cfg`, `HighlightIsOnScreen`: the same early return in `sectionObserver`: Expertise -> (Selected work enters) -> back up: `data-active-scene="work"` while only Expertise is in view. Zones 1 -> 2 -> 1. `HighlightNeverGoesBack` holds for scenes because no section ratio reaches 0.25.
-
-The cause of all three is that the callback decides from the entries of one batch only, not from every target currently in the band.
-
-When a fix lands on purpose and the replay no longer reproduces a finding, retire it in `check.sh`: remove its id from `KNOWN_IDS` and the rule from the expected list of its config in the `for cfg in` loop, and update this section and the expected output above. If the fix changes the zones, update the model first (see "Read the result").
+For an intended change, mirror the callback in `Pick()` and the probe's `pick`, rerun, and update replay expectations only with evidence from the real page. Keep every remaining known finding in `KNOWN_IDS` and its config's expected list. Retire a finding only when its replay is fixed and its rule holds in TLC. Record the checked code commit below.
 
 ## Prove the check can turn red
 
@@ -120,18 +114,19 @@ git checkout -- static/main.js
 
 Expected: `MISMATCH scene observer options ...`, `MISMATCH scene zones: ...`, `C3 NOT RUN ...`, `CHANGED: MODEL OUT OF DATE ...`, `RESULT: CHANGED (model-out-of-date C3-replay); ...`, exit 1. The `git checkout` undoes it.
 
-A callback change the zones cannot see: highlight Expertise whenever the section callback picks the Project lab.
+Restore the original batch-only callbacks without changing any zones.
 
 ```sh
-sed -i 's/      const scene = visible.target.dataset.scene;/      const scene = visible.target.dataset.scene === "lab" ? "capability" : visible.target.dataset.scene;/' static/main.js
+git show 1023914:static/main.js > static/main.js
 .claude/skills/verify-scroll-highlight/check.sh; echo "exit=$?"
-git checkout -- static/main.js
+git restore -- static/main.js
 ```
 
-Expected: `MISMATCH scene callback: ... zone 3 -> 4 scrolling down (y ...): highlight work -> capability, model allows lab`, `RESULT: CHANGED (model-out-of-date); ...`, exit 1.
+Expected: callback `MISMATCH` lines, all three fixed replays fail, `RESULT: CHANGED (model-out-of-date C1-replay C2-replay C3-replay)`, exit 1. TLC still holds on the fixed model, so the probe is what rejects the stale implementation. Only run these mutations with a clean `static/main.js` and restore it afterwards.
 
 ## Coverage and sync
 
-- Covered: `static/main.js` lines 38-88 (both observers and their options); the `[data-scene]`, `[data-stage]`, `[data-stage-link]` markup of `templates/content/en.html` at the measured layout; the section heights that produce the zone tables (via the probe).
-- Not covered: viewports other than 1280x800 (the probe can be pointed at another size by editing it; the zone tables may then differ); the French page (same markup, other text lengths); several callbacks merged into one when the main thread is busy; anchor jumps from the stage links; the pointer effect (`main.js:20-36`) and the capability filter (`main.js:90-110`).
-- Sync commit: **7b125e4**, the `origin/main` this skill was added from. On 2026-11-09 the anchors above were read at that commit and `check.sh`, run from this repository's checkout, gave `RESULT: EXPECTED` (exit 0); M3 gave `RESULT: CHANGED` (exit 1). Move it forward only after `check.sh` at the new commit gives `EXPECTED`, or after you updated the model and findings with replayed evidence.
+- Covered: `static/main.js` lines 38-100 (both observers and their options); the `[data-scene]`, `[data-stage]`, `[data-stage-link]` markup of `templates/content/en.html` at the measured layout; the section heights that produce the zone tables (via the probe).
+- Not covered: viewports other than 1280x800 (the probe can be pointed at another size by editing it; the zone tables may then differ); the French page (same markup, other text lengths); several callbacks merged into one when the main thread is busy; anchor jumps from the stage links; the pointer effect (`main.js:20-36`) and the capability filter (`main.js:102-122`).
+- Sync commit: **9df5331**, the synchronized code and verification checked on 2026-11-10, based on main `1023914`. The model, probe and fixed replay expectations describe its callbacks. The baseline reproduced C1-C3 with exit 0; the updated check on the fix gives `RESULT: EXPECTED` with no known findings. Restoring the baseline `static/main.js` makes the updated check fail.
+- Product regressions: `npm ci`, `npx playwright-core install --with-deps chromium-headless-shell`, `npm test`. See `tests/README.md`. CI runs both locales on pull requests and main and gates deploy on the browser job. Those tests cover exits and jumps beyond the formal model's adjacent-zone assumption; they do not extend the TLC proof to arbitrary viewports or delayed callbacks.
