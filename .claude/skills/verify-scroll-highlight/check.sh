@@ -1,15 +1,16 @@
 #!/bin/sh
 # verify-scroll-highlight: serve a build of this checkout on 127.0.0.1, check in Chromium that ScrollTracking.tla
-# still describes static/main.js on the real page, replay the known bug paths C1 to C3, run TLC, compare.
+# still describes static/main.js on the real page, replay the fixed bug paths C1 to C3, run TLC, compare.
 # Usage: .claude/skills/verify-scroll-highlight/check.sh   (no argument; run from anywhere inside the checkout)
 # Env: JAVA, TLA2TOOLS, PW_CORE, CHROME (see SKILL.md "Tools").
-# Exit: 0 expected (C1 C2 C3 reproduce, every other rule holds), 1 changed, 2 tooling missing, 3 check could not run.
+# Exit: 0 expected (C1 C2 C3 fixed, every rule holds), 1 changed, 2 tooling missing, 3 check could not run.
 # Copies the working tree (tracked and untracked files, no ignored files, no .env) to a temporary directory
 # and builds there. Writes nothing into the checkout.
 set -eu
 SKILL=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(git -C "$SKILL" rev-parse --show-toplevel)
-KNOWN_IDS="C1 C2 C3"
+KNOWN_IDS=""
+FIXED_IDS="C1 C2 C3"
 
 finish() { echo "RESULT: $1"; exit "$2"; }
 missing() { echo "TOOLING MISSING: $1"; finish "TOOLING MISSING ($1); known findings $KNOWN_IDS not checked" 2; }
@@ -30,7 +31,7 @@ WORK=$(mktemp -d "${TMPDIR:-/tmp}/verify-scroll-highlight.XXXXXX")
 SERVER=
 trap '[ -z "$SERVER" ] || kill "$SERVER" 2>/dev/null || true; rm -rf "$WORK/target"' EXIT
 mkdir -p "$WORK/src"
-git -C "$ROOT" ls-files -z --cached --others --exclude-standard -- ':(exclude).env*' ':(exclude)*/.env*' \
+git -C "$ROOT" ls-files -z --cached --others --exclude-standard -- ':(exclude).env*' ':(exclude)*/.env*' ':(exclude)node_modules/**' \
   | (cd "$ROOT" && tar --null --ignore-failed-read -T - -cf -) | tar -xf - -C "$WORK/src"
 echo "checking the working tree of $ROOT (HEAD $(git -C "$ROOT" rev-parse --short HEAD)) in $WORK"
 
@@ -61,12 +62,12 @@ if grep -q '^MISMATCH ' "$WORK/probe.log"; then
   echo "CHANGED: MODEL OUT OF DATE, the real page no longer follows ScrollTracking.tla (zones, observer options or callback, see MISMATCH above)"
   changed="$changed model-out-of-date"
 fi
-for id in $KNOWN_IDS; do
-  grep -q "^$id REPRODUCED " "$WORK/probe.log" || { echo "CHANGED $id: the replay on the real page did not reproduce it (NOT REPRODUCED or NOT RUN above)"; changed="$changed $id-replay"; }
+for id in $FIXED_IDS; do
+  grep -q "^$id FIXED " "$WORK/probe.log" || { echo "CHANGED $id: fixed replay failed or did not run"; changed="$changed $id-replay"; }
 done
 
 cp "$SKILL/ScrollTracking.tla" "$SKILL/stage.cfg" "$SKILL/scene.cfg" "$WORK/"
-for cfg in stage:'C1 C2':'HighlightIsOnScreen HighlightNeverGoesBack' scene:'C3':'HighlightIsOnScreen'; do
+for cfg in stage:'':'' scene:'':''; do
   name=${cfg%%:*} rest=${cfg#*:}
   ids=${rest%%:*} expected=${rest#*:}
   (cd "$WORK" && timeout 300 "$JAVA" -XX:+UseParallelGC -Xmx2g -cp "$TLA2TOOLS" tlc2.TLC -workers 1 -continue \
@@ -75,13 +76,13 @@ for cfg in stage:'C1 C2':'HighlightIsOnScreen HighlightNeverGoesBack' scene:'C3'
   broken=$(sed -n 's/^Error: Invariant \(.*\) is violated.*/\1/p' "$WORK/tlc-$name.out" | sort -u | tr '\n' ' ' | sed 's/ $//')
   states=$(grep -o '[0-9]* distinct states found' "$WORK/tlc-$name.out")
   if [ "$broken" = "$expected" ]; then
-    echo "SAME    $name.cfg: breaks [ $broken ] = known findings $ids ($states)"
+    echo "SAME    $name.cfg: breaks [ $broken ] = known findings ${ids:-none} ($states)"
   else
-    echo "CHANGED $name.cfg: breaks [ $broken ], known findings $ids break [ $expected ] ($states)"
+    echo "CHANGED $name.cfg: breaks [ $broken ], known findings ${ids:-none} break [ $expected ] ($states)"
     changed="$changed $name.cfg"
   fi
 done
 
 echo "work dir: $WORK"
-[ -z "$changed" ] && finish "EXPECTED; known findings $KNOWN_IDS still reproduce (TLC and replay) and every other rule holds" 0
+[ -z "$changed" ] && finish "EXPECTED; known findings none; fixed replays pass and every rule holds" 0
 finish "CHANGED ($(echo $changed)); known findings are $KNOWN_IDS, read SKILL.md 'Read the result'" 1

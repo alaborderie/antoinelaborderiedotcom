@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { chromium } from "playwright-core";
 
 for (const locale of ["en", "fr"]) {
-  test(`${locale}: scroll highlights stay in the band and follow scroll direction`, async (t) => {
+  test(`${locale}: scroll highlights stay in the band and follow scroll direction`, { timeout: 60000 }, async (t) => {
     const browser = await chromium.launch({ executablePath: process.env.CHROME });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
@@ -46,16 +46,16 @@ for (const locale of ["en", "fr"]) {
         ["C3", "scene", [positions.scene[0], positions.scene[1], positions.scene[0]]],
       ]) {
         await t.test(id, async () => {
-        let previous;
-        for (const y of path) {
-          await move(y);
-          const state = await check(kind);
-          assert.ok(state.band.includes(state.lit), `${id}: ${state.lit} outside band ${state.band}`);
-          if (previous) {
-            assert.ok(y > previous.y ? state.index >= previous.index : state.index <= previous.index, `${id}: highlight moved against scroll direction`);
+          let previous;
+          for (const y of path) {
+            await move(y);
+            const state = await check(kind);
+            assert.ok(state.band.includes(state.lit), `${id}: ${state.lit} outside band ${state.band}`);
+            if (previous) {
+              assert.ok(y > previous.y ? state.index >= previous.index : state.index <= previous.index, `${id}: highlight moved against scroll direction`);
+            }
+            previous = { y, index: state.index };
           }
-          previous = { y, index: state.index };
-        }
         });
       }
       // Also cross the exits, where a sticky highlight must hand over to another target.

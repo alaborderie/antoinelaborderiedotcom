@@ -3,9 +3,9 @@
 // 1. Wraps IntersectionObserver before static/main.js runs, scrolls the home page in 8 px steps and
 //    records the zones (each target out/low/high) that main.js's two observers really go through.
 // 2. Compares the observer options and zone sequences with the tables in ScrollTracking.tla.
-// 3. Replays each known TLC bug path (C1 to C3) on the real page, one scroll per step, scrolling to the
+// 3. Replays each fixed TLC bug path (C1 to C3) on the real page, one scroll per step, scrolling to the
 //    middle of each zone.
-// Prints one line per result: "ZONES <kind> OK ...", "MISMATCH ...", "<id> REPRODUCED|NOT REPRODUCED|NOT RUN ...".
+// Prints one line per result: "ZONES <kind> OK ...", "MISMATCH ...", "<id> FIXED|MISMATCH replay|NOT RUN ...".
 // Chromium reaches 127.0.0.1 only: every other host fails to resolve (PostHog included).
 import { readFileSync } from "node:fs";
 const [url, specPath] = process.argv.slice(2);
@@ -109,12 +109,9 @@ for (const kind of ["stage", "scene"]) {
 // Every step of both scans: the real highlight must be one that Pick() in the model allows. Within a zone
 // the model takes no step, so the highlight must not move. Steps with a section outside the scene model's
 // three-scene window in the band are outside the model and skipped.
-const rank = (s) => (s === "high" ? 2 : s === "low" ? 1 : 0);
 const pick = (changed, zone, old) => {
-  const vis = changed.filter((t) => zone[t] !== "out");
-  if (!vis.length) return [old];
-  const best = Math.max(...vis.map((t) => rank(zone[t])));
-  return vis.filter((t) => rank(zone[t]) === best);
+  const vis = Object.keys(zone).filter((t) => zone[t] !== "out");
+  return !vis.length || vis.includes(old) ? [old] : [vis[0]];
 };
 for (const kind of ["stage", "scene"]) {
   if (!zonesOk[kind]) continue;
@@ -147,11 +144,11 @@ async function replay(id, name, kind, zones, check) {
   await p.goto(url, { waitUntil: "load" });
   const lit = [];
   for (const z of zones) { await p.evaluate((y) => window.scrollTo(0, y), mid(kind, z)); await p.waitForTimeout(300); lit.push(await read(p, kind)); }
-  console.log(`${id} ${check(lit) ? "REPRODUCED" : "NOT REPRODUCED"} ${name}: zones ${zones.join(" -> ")}, highlight ${lit.join(" -> ")}`);
+  console.log(`${id} ${check(lit) ? "FIXED" : "MISMATCH replay"} ${name}: zones ${zones.join(" -> ")}, highlight ${lit.join(" -> ")}`);
   await p.close();
 }
-await replay("C1", "stage/HighlightNeverGoesBack", "stage", [3, 4, 5], (l) => l.join() === "peaksys,hellowork,peaksys");
-await replay("C2", "stage/HighlightIsOnScreen", "stage", [3, 4, 3], (l) => l[2] === "hellowork");
-await replay("C3", "scene/HighlightIsOnScreen", "scene", [1, 2, 1], (l) => l[2] === "work");
+await replay("C1", "stage/HighlightNeverGoesBack", "stage", [3, 4, 5], (l) => l.join() === "peaksys,peaksys,peaksys");
+await replay("C2", "stage/HighlightIsOnScreen", "stage", [3, 4, 3], (l) => l.join() === "peaksys,peaksys,peaksys");
+await replay("C3", "scene/HighlightIsOnScreen", "scene", [1, 2, 1], (l) => l.join() === "capability,capability,capability");
 await browser.close();
 console.log(`off-site hosts the page tried: ${[...offsite].sort().join(", ") || "none"}; answered: ${[...answered].sort().join(", ") || "none"}`);
