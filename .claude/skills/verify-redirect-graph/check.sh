@@ -8,9 +8,9 @@
 set -eu
 SKILL=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(git -C "$SKILL" rev-parse --show-toplevel)
-KNOWN_IDS="B1 B2"
+KNOWN_IDS="none"
 # id:rule:start URLs broken at the sync commit
-KNOWN="B1:RedirectsKeepTheQuery:39 B2:NotFoundPageSpeaksTheUrlLanguage:30"
+KNOWN=""
 
 finish() { echo "RESULT: $1"; exit "$2"; }
 missing() { echo "TOOLING MISSING: $1"; finish "TOOLING MISSING ($1); known findings $KNOWN_IDS not checked" 2; }
@@ -48,5 +48,5 @@ for rule in $(sed -n 's/^BROKEN \([A-Za-z]*\) .*/\1/p' "$WORK/result.txt"); do
   case " $KNOWN " in *":$rule:"*) ;; *) echo "CHANGED: $rule newly broken"; changed="$changed $rule" ;; esac
 done
 echo "work dir: $WORK"
-[ -z "$changed" ] && finish "EXPECTED; known findings $KNOWN_IDS still reproduce and every other rule holds" 0
+[ -z "$changed" ] && finish "EXPECTED; known findings $KNOWN_IDS; all rules hold" 0
 finish "CHANGED ($(echo $changed)); known findings are $KNOWN_IDS, read SKILL.md 'Read the result'" 1

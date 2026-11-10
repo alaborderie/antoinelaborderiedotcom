@@ -1,7 +1,7 @@
 use askama::Template;
 use axum::{
-    extract::Request,
-    http::{header, uri::Authority, HeaderValue, StatusCode, Uri},
+    extract::{OriginalUri, Request},
+    http::{header, uri::Authority, HeaderValue, StatusCode},
     middleware::{self, Next},
     response::{Html, IntoResponse, Redirect, Response},
     routing::get,
@@ -18,6 +18,8 @@ const ASSET_VERSION: &str = "2026-10-23-1";
 #[derive(Template)]
 #[template(path = "index.html")]
 struct IndexTemplate {
+    script: &'static str,
+    styles: &'static str,
     asset_version: &'static str,
     lang: &'static str,
     title: &'static str,
@@ -32,7 +34,7 @@ struct IndexTemplate {
 #[derive(Template)]
 #[template(path = "legal.html")]
 struct LegalTemplate {
-    asset_version: &'static str,
+    styles: &'static str,
     is_french: bool,
     canonical: &'static str,
 }
@@ -40,7 +42,7 @@ struct LegalTemplate {
 #[derive(Template)]
 #[template(path = "404.html")]
 struct NotFoundTemplate {
-    asset_version: &'static str,
+    styles: &'static str,
     is_french: bool,
 }
 
@@ -94,6 +96,7 @@ fn app() -> Router {
 }
 
 async fn http_policy(request: Request, next: Next) -> Response {
+    let query = request.uri().query().map(str::to_owned);
     let is_static = request.uri().path().starts_with("/static/");
     let is_www = request
         .headers()
@@ -118,6 +121,18 @@ async fn http_policy(request: Request, next: Next) -> Response {
     } else {
         next.run(request).await
     };
+
+    if response.status().is_redirection() {
+        if let (Some(query), Some(location)) = (query, response.headers().get(header::LOCATION)) {
+            if let Ok(location) = location.to_str() {
+                if !location.contains('?') {
+                    if let Ok(location) = HeaderValue::from_str(&format!("{location}?{query}")) {
+                        response.headers_mut().insert(header::LOCATION, location);
+                    }
+                }
+            }
+        }
+    }
 
     // TLS terminates upstream. Do not redirect by URI scheme here.
     response.headers_mut().insert(
@@ -151,6 +166,8 @@ async fn main() {
 
 async fn english() -> Response {
     render(IndexTemplate {
+        script: include_str!("../static/main.js"),
+        styles: include_str!("../static/styles.css"),
         asset_version: ASSET_VERSION,
         lang: "en",
         title: "Freelance DevEx & AI Engineer, Agentic Coding | Antoine Laborderie",
@@ -164,6 +181,8 @@ async fn english() -> Response {
 }
 async fn french() -> Response {
     render(IndexTemplate {
+        script: include_str!("../static/main.js"),
+        styles: include_str!("../static/styles.css"),
         asset_version: ASSET_VERSION,
         lang: "fr",
         title: "Développeur freelance Bordeaux · DevEx & IA, agentic coding | Antoine Laborderie",
@@ -178,7 +197,7 @@ async fn french() -> Response {
 
 async fn legal_english() -> Response {
     render(LegalTemplate {
-        asset_version: ASSET_VERSION,
+        styles: include_str!("../static/styles.css"),
         is_french: false,
         canonical: "https://antoinelaborderie.com/legal-notice",
     })
@@ -186,16 +205,16 @@ async fn legal_english() -> Response {
 
 async fn legal_french() -> Response {
     render(LegalTemplate {
-        asset_version: ASSET_VERSION,
+        styles: include_str!("../static/styles.css"),
         is_french: true,
         canonical: "https://antoinelaborderie.com/fr/mentions-legales",
     })
 }
 
-async fn not_found(uri: Uri) -> Response {
+async fn not_found(OriginalUri(uri): OriginalUri) -> Response {
     let mut response = render(NotFoundTemplate {
-        asset_version: ASSET_VERSION,
-        is_french: uri.path().starts_with("/fr/"),
+        styles: include_str!("../static/styles.css"),
+        is_french: uri.path().starts_with("/fr/") || uri.path().starts_with("/static/fr/"),
     });
     if response.status().is_success() {
         *response.status_mut() = StatusCode::NOT_FOUND;
@@ -267,9 +286,18 @@ mod tests {
 
     #[tokio::test]
     async fn page_carries_its_own_release_assets() {
-        for path in ["/", "/fr", "/legal-notice", "/fr/mentions-legales", "/missing"] {
+        for path in [
+            "/",
+            "/fr",
+            "/legal-notice",
+            "/fr/mentions-legales",
+            "/missing",
+        ] {
             let (_, _, html) = request(path).await;
-            assert!(html.contains(include_str!("../static/styles.css")), "{path}");
+            assert!(
+                html.contains(include_str!("../static/styles.css")),
+                "{path}"
+            );
             assert!(!html.contains("href=\"/static/styles.css"), "{path}");
             if path == "/" || path == "/fr" {
                 assert!(html.contains(include_str!("../static/main.js")), "{path}");
@@ -552,44 +580,16 @@ mod tests {
 
     #[tokio::test]
     async fn links_versioned_assets_on_every_page_and_serves_them_with_caching() {
-        let (_, _, home) = request("/").await;
-        let version = home
-            .split("href=\"/static/styles.css?v=")
-            .nth(1)
-            .expect("Home stylesheet must have a version query")
-            .split('"')
-            .next()
-            .unwrap();
-        assert!(!version.is_empty());
-        assert!(version
-            .chars()
-            .all(|ch| ch.is_ascii_alphanumeric() || ch == '-'));
-
-        for path in [
-            "/",
-            "/fr",
-            "/legal-notice",
-            "/fr/mentions-legales",
-            "/missing",
-            "/fr/missing",
-            "/static/missing.css",
-        ] {
+        let version = ASSET_VERSION;
+        for path in ["/", "/fr"] {
             let (_, _, body) = request(path).await;
-            assert!(
-                body.contains(&format!("href=\"/static/styles.css?v={version}\"")),
-                "{path}"
+            assert_eq!(
+                body.matches(&format!(
+                    "content=\"https://antoinelaborderie.com/static/og-image.png?v={version}\""
+                ))
+                .count(),
+                2
             );
-            assert!(!body.contains("href=\"/static/styles.css\""));
-            if path == "/" || path == "/fr" {
-                assert!(body.contains(&format!("src=\"/static/main.js?v={version}\"")));
-                assert_eq!(
-                    body.matches(&format!(
-                        "content=\"https://antoinelaborderie.com/static/og-image.png?v={version}\""
-                    ))
-                    .count(),
-                    2
-                );
-            }
         }
 
         for asset in ["styles.css", "main.js", "og-image.png"] {

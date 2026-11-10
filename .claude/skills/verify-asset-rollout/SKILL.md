@@ -1,35 +1,30 @@
 ---
 name: verify-asset-rollout
-description: Model-check (TLA+/TLC) what one visitor's browser sees while a release of antoinelaborderie.com rolls out, fed by facts read from the real router and replayed on two real builds in Chromium. Use before shipping a change to static/styles.css, static/main.js, static/og-image.png, ASSET_VERSION, the ?v= links in templates/index.html, the /static route or the Cache-Control policy in http_policy (src/main.rs), or the landing-website Deployment, and whenever a release left visitors with a broken-looking page.
+description: Model-check and replay release-consistent CSS and JavaScript during rolling deployments. Use before changing templates, embedded static assets, app routing, cache policy, or the rollout strategy.
 ---
 
 # verify-asset-rollout
 
-**Promise.** A visitor's page is always styled by the CSS (and run by the JS) of its own release, before, during and after a deploy.
+## Contract
 
-**Harm when broken.** A visitor sees the new page with the old stylesheet (or the reverse), and the browser keeps that wrong stylesheet under the new `?v=` link for up to 24 hours, on every new page view.
+A visitor's page uses its own release's CSS and JavaScript throughout rollout overlap and instant cutover. `IndexTemplate`, `LegalTemplate` and `NotFoundTemplate` embed CSS with `include_str!`; the home page embeds JavaScript at the end of the body, after its DOM exists. These trusted repository sources are rendered with Askama's `safe` filter. Do not insert visitor-controlled text in these fields. CSS/JS changes require rebuilding the binary. HTML remains `public, max-age=300`, errors remain `no-store`, and compression applies to HTML including its assets.
 
-## What is checked
+The Model the Domain principle shaped this fix: the HTML response is the release unit, carrying its own assets rather than coordinating independent pod requests. The cost is larger HTML and no separate browser cache entry for the embedded CSS/JS. `static/main.js` remains an unchanged source path. Public `/static/*` routes remain available with their existing 86400-second cache life. Only the social image still uses `ASSET_VERSION` in page links.
 
-`AssetRollout.tla` models one browser and one release (release 1 live, release 2 ships a different `static/styles.css`). Every step is one HTTP exchange answered atomically by one stateless handler, one cache expiry, or one change in which pods Traefik sends traffic to. Rules (INVARIANTS):
+## Model and rules
 
-| Rule | Reader's sentence | Code it depends on |
-|---|---|---|
-| `PageMatchesItsCss` | The page you see is styled by the CSS of its own release. | `templates/index.html:21,54` (`?v={{ asset_version }}`), `ASSET_VERSION` `src/main.rs:16` |
-| `NewLinkNeverHoldsOldCss` | The browser never keeps another release's CSS under the URL the new release links to. | `nest_service("/static", ServeDir::new("static"))` `src/main.rs:87-90` ignores `?v=`; `http_policy` `src/main.rs:127-138` sends `public, max-age=86400` on static 2xx, `public, max-age=300` on pages |
-| `CssLinkNeverFails` | A page's stylesheet link never fails. | same; guards a naive "reject other ?v=" fix |
+`AssetRollout.tla` models two releases, one browser, rollout overlap, instant switch, page cache reuse and expiry. Each HTTP action is one atomic response. `InlineAssets` is measured by `asset_facts.rs` through the real `app()` for both home locales. When true, opening HTML from either a pod or cache also applies that HTML's CSS release. No separate CSS request or CSS cache entry is created. The legacy external-link actions remain for mutation detection.
 
-Model constants and where they come from:
+The invariants are unchanged:
 
-- `Bumped`: TRUE when the checkout bumps `ASSET_VERSION` whenever it changes a versioned asset, and the home pages link `styles.css` and `main.js` with `?v=ASSET_VERSION`. `check.sh` derives it from git (working tree against `BASE`, the release now live) and from the real router.
-- `ServerChecksVersion`: TRUE when `GET /static/styles.css?v=<another value>` is not a 200. `check.sh` reads it from the real router (`asset_facts.rs`).
-- `Overlap`: whether old and new pod both receive traffic during the rollout. Not in this repo: `k3s-ovh-config/landing-website.yaml` (read at fb50d13) has `replicas: 1`, the default RollingUpdate (maxSurge 1, maxUnavailable 0), no readinessProbe, and CI runs `kubectl rollout restart deployment landing-website` (`.github/workflows/rust.yml`, job `rollout`, line 55). So `deploy-as-is.cfg` uses `Overlap = TRUE`. `cutover.cfg` uses `Overlap = FALSE` (an instant switch, the best a deploy can do) to keep code regressions visible apart from the infrastructure finding.
+- `PageMatchesItsCss` requires the displayed CSS release to equal the page release.
+- `NewLinkNeverHoldsOldCss` prohibits caching old CSS under the new release's key.
+- `CssLinkNeverFails` prohibits a failed stylesheet request.
+- `TypeOK` checks the state domain.
 
-`replay.mjs` then plays both known paths on real builds of the checkout: release 1 is the checkout as it is, release 2 is the same code with `ASSET_VERSION` bumped. Each build serves its own `static/`, whose `styles.css` carries a `--release` marker, on 127.0.0.1. A small proxy stands in for Traefik and sends each request to the pod the path names. Chromium's own HTTP cache plays the browser cache.
+`Bumped` and `ServerChecksVersion` still describe the legacy query-link path. The probe reads current URI behavior and the script compares assets with `BASE` (merge-base with `origin/main` by default). `Overlap` remains TRUE for deploy-as-is and FALSE for cutover. The external k3s facts have not changed and readiness remains out of scope.
 
-## Does my change touch this?
-
-Yes if the diff touches any of: `static/styles.css`, `static/main.js`, `static/og-image.png`, `ASSET_VERSION` or `http_policy` or the `/static` `nest_service` in `src/main.rs`, the `?v=` links in `templates/index.html`, the `Dockerfile` `COPY static/` line, the `rollout` job in `.github/workflows/rust.yml`, or the landing-website Deployment in k3s-ovh-config.
+The real-build replay adds CSS and JS release markers **before compiling** each release. A local proxy offers the other pod for stylesheet requests. Chromium must display release-2 CSS and execute release-2 JS for new HTML, including a second tab reusing cached HTML after the old pod leaves. Old HTML must retain release-1 CSS and JS across cutover. Any separate CSS request or wrong marker fails the replay. Off-site host resolution is disabled and an off-site response fails the check.
 
 ## Tools
 
@@ -51,76 +46,43 @@ A missing tool stops the check before anything runs, with `TOOLING MISSING: <wha
 
 ## Run
 
-From anywhere inside a checkout, no argument:
-
 ```sh
-export TLA2TOOLS=/path/to/tla2tools.jar JAVA=/path/to/bin/java
-export PW_CORE=/path/to/node_modules/playwright-core CHROME=/path/to/chrome-headless-shell
+export JAVA=/home/jarvis/Android/jdk-17/bin/java
+export TLA2TOOLS=/home/jarvis/t3-tots/out/state-machines/2026-11-08/_tools/tla2tools.jar
+export PW_CORE=/path/to/node_modules/playwright-core
+export CHROME=/path/to/chrome-headless-shell
 .claude/skills/verify-asset-rollout/check.sh
 ```
 
-It checks the working tree as it is on disk, committed or not. It copies the tracked and untracked files (never ignored files, never `.env*`) to a new `mktemp -d` directory, builds there with `CARGO_TARGET_DIR` inside it, and deletes the build output at exit. Nothing is written into the checkout. `BASE` (default: the merge-base of `HEAD` and `origin/main`) is the release now live, used only to decide `Bumped`.
+The script copies tracked and untracked files, excluding ignored files and `.env*`, into a temporary directory. It probes the actual router, runs TLC on both configurations with one worker and `-Xmx2g`, builds two real releases and runs Chromium. No production requests or checkout writes occur. Check memory and load before running on a shared machine.
 
-Steps, about 30 s on a warm cargo cache: `cargo test` of `asset_facts.rs` appended to the copy's `src/main.rs`, two TLC runs (`-workers 1`, `-Xmx2g -XX:+UseParallelGC`, under `timeout 300`, 179 and 48 distinct states), two debug builds, the Chromium replay.
-
-Isolation: the pods bind 127.0.0.1 on free ports between 20000 and 32000 (the only source edits, in the copy). Chromium runs with `--host-resolver-rules` that leave only 127.0.0.1 resolvable, so the page's PostHog script never loads and no event leaves the machine. The replay prints the off-site hosts the page tried and which answered; an answer stops the check with exit 3. No secret and no `.env` is read.
-
-## What to expect at the sync commit
+Expected output includes both configurations breaking no rules, `A1 FIXED`, `A2 FIXED`, and:
 
 ```
-SAME    deploy-as-is.cfg: breaks [ NewLinkNeverHoldsOldCss PageMatchesItsCss ] = known finding A1 (179 distinct states found)
-SAME    cutover.cfg: breaks [ PageMatchesItsCss ] = known finding A2 (48 distinct states found)
-A1 REPRODUCED on the real builds
-A2 REPRODUCED on the real builds
-off-site hosts the page tried: eu-assets.i.posthog.com; answered: none
-RESULT: EXPECTED; known findings A1 A2 still reproduce (TLC and replay) and every other rule holds
+RESULT: EXPECTED; known findings none; all rules hold (TLC and replay)
 ```
 
-Exit status:
+Exit 0 means the expected outcomes match. Exit 1 means rules or replay outcomes changed. Exit 2 means missing tooling. Exit 3 means a build, model, replay or isolation failure; inspect the printed temporary work directory. Never treat a failed or incomplete TLC run as a pass.
 
-| Exit | Final line starts with | Meaning |
-|---|---|---|
-| 0 | `RESULT: EXPECTED` | A1 and A2 still break the same rules in TLC and still reproduce on the real builds; every other rule holds. The state of the code today. |
-| 1 | `RESULT: CHANGED (...)` | A config breaks other rules than its known finding, or a replay no longer reproduces A1 or A2. The parentheses name what changed. |
-| 2 | `RESULT: TOOLING MISSING (...)` | A tool above is missing. Nothing was checked. |
-| 3 | `RESULT: CHECK FAILED (...)` | The check could not run: the copy does not build, TLC did not finish, a pod did not start, or the isolation leaked. |
+## Known findings
 
-## Read the result
-
-Read every TLC result with the `/statechart` skill on `AssetRollout.tla`, the generated `<work dir>/<config>.cfg`, and `view.mjs` from this folder. It gives each broken rule's shortest path in plain words, and a chart when the model is under 500 states.
-
-- **CHANGED with a new broken rule**: the change makes a visitor's page worse. Get the path with `/statechart`, then replay it on the real code before calling it a bug: add it to `replay.mjs`, one step per TLA+ action.
-- **CHANGED with a known finding gone** (a config breaks fewer rules, or `A1/A2 NOT REPRODUCED`): the change fixed it, or moved the code away from the model. Confirm in the replay output that the old path no longer happens.
-- **Bug or model error?** If the real page does not end up in the state a TLC path names, treat the model as wrong until you show otherwise, and fix the model, not the rule.
-
-## Known findings at the sync commit
-
-1. **A1**, `deploy-as-is.cfg` breaks `NewLinkNeverHoldsOldCss` and `PageMatchesItsCss`. Path: (0) old release live; (1) the new pod starts taking traffic; (2) you open the home page and the new pod answers (page links `styles.css?v=<new>`); (3) the CSS request reaches the old pod, which serves its own `styles.css` with 200 `public, max-age=86400`. The new page shows old CSS and the browser keeps it under the new link: after the old pod is gone, every new page view reuses it for up to a day. Replayed on the real builds, including the reuse after the old pod left. The production overlap window is inferred from the manifest, not observed.
-2. **A2**, `cutover.cfg` breaks `PageMatchesItsCss`: (1) you open the page on the old release; (2) traffic switches; (3) the CSS request reaches the new release. The old page shows new CSS until the cached page expires (5 min). Replayed on the real builds.
-3. `CssLinkNeverFails` holds. A fix that 404s other `?v=` values trades A1 and A2 for this rule (seen by mutation in the analysis). A fix that keeps both releases' assets reachable (content-hashed file names kept across releases, or the previous release's files shipped in the image) is what removes both.
-
-When a fix lands on purpose and the replay shows the old path no longer happens, retire the finding in `check.sh`: empty that config's expected rules in the `for cfg in` list, drop its id from `KNOWN_IDS` and from the `for id in A1 A2` replay loop, and update this section and the expected output above.
+None. A1 and A2 were reproduced against ac25368 before the fix. Both are retired because matching CSS and JS now arrive in the HTML response. This also covers legal and error pages through the shared page template. Existing independently cached HTML may persist for its old five-minute lifetime during migration; the fixed HTML has no cross-pod CSS/JS fetch.
 
 ## Prove the check can turn red
 
-Mutation M1 from the analysis: change a versioned asset without bumping `ASSET_VERSION`.
+In a disposable checkout, replace the `<style>{{ styles|safe }}</style>` in `templates/index.html` with the old `<link rel="stylesheet" href="/static/styles.css?v={{ asset_version }}" />`, then run `check.sh`.
 
-```sh
-printf '\n/* mutation: changed without an ASSET_VERSION bump */\n' >> static/styles.css
-.claude/skills/verify-asset-rollout/check.sh; echo "exit=$?"
-git checkout -- static/styles.css
-```
-
-Expected: `NOTE assets changed since BASE but ASSET_VERSION did not`, `CHANGED cutover.cfg: breaks [ NewLinkNeverHoldsOldCss PageMatchesItsCss ], known finding A2 breaks [ PageMatchesItsCss ] (38 distinct states found)`, `RESULT: CHANGED (cutover.cfg); ...`, exit 1. The `git checkout` undoes it. On a branch that already changes `static/`, set `BASE` to the commit the branch started from.
+Expected exit 1 or 3: `InlineAssets` becomes FALSE, TLC reports the original broken invariants, and the positive browser replay rejects release-1 CSS on new HTML. Restore the template afterward. An asset edit without a version bump is now safe for embedded assets, so the former M1 mutation is intentionally replaced. Never weaken an invariant or a replay assertion to make this mutation pass.
 
 ## Coverage and sync
 
-- Covered: `src/main.rs` `ASSET_VERSION`, `app()` (the `/static` `nest_service`), `http_policy` (Cache-Control branch), `english()`, `french()`; `templates/index.html` stylesheet and script links; `static/styles.css`, `static/main.js`, `static/og-image.png` as versioned assets; `.github/workflows/rust.yml` job `rollout`; outside the repo, `k3s-ovh-config/landing-website.yaml` (fb50d13).
-- Not covered: shared caches between visitor and Traefik (none known), the 502s a pod without readinessProbe can cause before it listens, `og-image.png` as seen by social crawlers, timing (the model says what can happen, not how often; the overlap window is a few seconds per deploy). `main.js?v=` follows the same mechanism and is not modeled apart.
-- Sync commit: **7b125e4** (`revert: undo the Etcheverry rename and light redesign (#12, #13) (#14)`), the `origin/main` this skill was added from. On 2026-11-09 the anchors above were read at that commit and `check.sh`, run from this repository's checkout, gave `RESULT: EXPECTED` (exit 0); M1 gave `RESULT: CHANGED` (exit 1). Move the sync commit forward only after you confirm, at the new commit, that each anchor still says what this file claims and that `check.sh` gives `EXPECTED`, or after you updated the findings with replayed evidence.
+- Covered product code: `src/main.rs` template asset fields, `english`, `french`, `legal_english`, `legal_french`, `not_found`, `http_policy`, `app`; `templates/index.html` and `templates/page.html`; embedded `static/styles.css` and `static/main.js`.
+- Replay coverage: both home releases, browser HTML caching, CSS application and JS execution, overlap and cutover. Product tests cover all rendered page types and both locales.
+- Not covered: social crawler image caching, readiness/502s, intermediary caches, timing or rollout frequency. Infrastructure references remain k3s-ovh-config fb50d13 and the normal rollout workflow, which this change does not edit.
+- Sync commit: FIX_SYNC. Baseline ac25368 reproduced A1/A2; the fixed-code check returns EXPECTED with no findings. Update this reference after intended behavior changes are replayed and both configurations finish.
 
 ## Updating the verification
 
-- A code change that alters a fact (`?v=` handling, Cache-Control values, which files are versioned): update the matching action in `AssetRollout.tla` (one action per HTTP exchange) and its comment anchors, then rerun. Never drop or weaken a rule to get `EXPECTED`.
-- The bind line `TcpListener::bind("0.0.0.0:3000")` or the `const ASSET_VERSION: &str = "...";` line changes shape: `check.sh` stops with exit 3 and says so; update its `sed` patterns.
-- The k3s strategy changes (e.g. `Recreate`, or a readinessProbe plus a preStop delay): `Overlap` stays a statement about whether two releases can answer one visitor within one page load; set it from the manifest and say so in this file.
+When asset delivery changes, update the measured fact in `asset_facts.rs` and its HTTP action in `AssetRollout.tla`, preserving every invariant. Update the two-release browser replay to assert the intended behavior positively. Move expected rule sets and known IDs only after comparing real replay output. Keep a mutation that turns the check red. Update coverage and the sync commit after the fixed-code check passes.
+
+The harness rewrites the exact `ASSET_VERSION` declaration and `TcpListener::bind("0.0.0.0:3000")`; update its patterns if those change. Keep marker edits before compilation for embedded assets. No request in any replay may reach the production site.

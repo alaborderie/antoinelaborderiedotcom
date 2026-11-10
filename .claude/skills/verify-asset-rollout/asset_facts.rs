@@ -22,14 +22,20 @@ async fn get(path: &str) -> (StatusCode, axum::http::HeaderMap, String) {
 #[tokio::test]
 async fn asset_facts() {
     let mut links_versioned = true;
+    let mut inline_assets = true;
     let mut page_cache = Vec::new();
     for path in ["/", "/fr"] {
         let (_, headers, html) = get(path).await;
         links_versioned &= html.contains(&format!("href=\"/static/styles.css?v={ASSET_VERSION}\""))
             && html.contains(&format!("src=\"/static/main.js?v={ASSET_VERSION}\""));
+        inline_assets &= html.contains(include_str!("../static/styles.css"))
+            && html.contains(include_str!("../static/main.js"))
+            && !html.contains("href=\"/static/styles.css")
+            && !html.contains("src=\"/static/main.js");
         page_cache.push(headers[header::CACHE_CONTROL].to_str().unwrap().to_owned());
     }
     let (status, headers, _) = get("/static/styles.css?v=not-this-release").await;
+    println!("FACT inline_assets={inline_assets}");
     println!("FACT asset_version={ASSET_VERSION}");
     println!("FACT links_versioned={links_versioned}");
     println!("FACT server_checks_version={}", status != StatusCode::OK);
