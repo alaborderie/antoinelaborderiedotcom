@@ -79,7 +79,7 @@ Expected exit 1 or 3: `InlineAssets` becomes FALSE, TLC reports the original bro
 - Covered product code: `src/main.rs` template asset fields, `english`, `french`, `legal_english`, `legal_french`, `not_found`, `http_policy`, `app`; `templates/index.html` and `templates/page.html`; embedded `static/styles.css` and `static/main.js`.
 - Replay coverage: both home releases, browser HTML caching, CSS application and JS execution, overlap and cutover. Product tests cover all rendered page types and both locales.
 - Not covered: social crawler image caching, readiness/502s, intermediary caches, timing or rollout frequency. Infrastructure references remain k3s-ovh-config fb50d13 and the normal rollout workflow, which this change does not edit.
-- Sync commit: FIX_SYNC. Baseline ac25368 reproduced A1/A2; the fixed-code check returns EXPECTED with no findings. Update this reference after intended behavior changes are replayed and both configurations finish.
+- Sync commit: 702be1a. Baseline ac25368 reproduced A1/A2; the fixed-code check returns EXPECTED with no findings. Update this reference after intended behavior changes are replayed and both configurations finish.
 
 ## Updating the verification
 

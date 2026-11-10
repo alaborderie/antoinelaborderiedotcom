@@ -83,4 +83,4 @@ Expected: a new line `BROKEN ErrorsAreNeverCached ...`, then `CHANGED: ErrorsAre
 
 - Covered: `src/main.rs` `app()`, `http_policy`, `not_found`, `render`, `robots`, `sitemap`, `favicon`, and the redirect closures; tower-http 0.6.2 ServeDir and CompressionLayer as wired there (identity encoding only).
 - Not covered: methods other than GET, `Accept-Encoding` variants, paths outside the bound (longer, other segments, non-ASCII), Traefik's own handling of Host and paths before the app.
-- Sync commit: FIX_SYNC. Baseline ac25368 reproduced B1 and the disputed B2 contract. The fixed-code check returns EXPECTED with no findings. M4 still detects error caching. After an intended change, replay the old example locally, update expectations only with evidence, then refresh the sync and coverage record.
+- Sync commit: 702be1a. Baseline ac25368 reproduced B1 and the disputed B2 contract. The fixed-code check returns EXPECTED with no findings. M4 still detects error caching. After an intended change, replay the old example locally, update expectations only with evidence, then refresh the sync and coverage record.
