@@ -266,6 +266,29 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn page_carries_its_own_release_assets() {
+        for path in ["/", "/fr", "/legal-notice", "/fr/mentions-legales", "/missing"] {
+            let (_, _, html) = request(path).await;
+            assert!(html.contains(include_str!("../static/styles.css")), "{path}");
+            assert!(!html.contains("href=\"/static/styles.css"), "{path}");
+            if path == "/" || path == "/fr" {
+                assert!(html.contains(include_str!("../static/main.js")), "{path}");
+                assert!(!html.contains("src=\"/static/main.js"), "{path}");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn french_static_not_found_uses_explicit_locale_contract() {
+        for path in ["/fr/missing", "/static/fr/", "/static/fr/missing.css"] {
+            let (status, headers, html) = request(path).await;
+            assert_eq!(status, StatusCode::NOT_FOUND);
+            assert_eq!(headers[header::CACHE_CONTROL], "no-store");
+            assert!(html.contains("<html lang=\"fr\""), "{path}");
+        }
+    }
+
+    #[tokio::test]
     async fn serves_indexable_localized_pages_with_complete_metadata() {
         let (status, _, en) = request("/").await;
         assert_eq!(status, StatusCode::OK);
@@ -343,6 +366,10 @@ mod tests {
             let (status, headers, _) = request(path).await;
             assert_eq!(status, StatusCode::PERMANENT_REDIRECT);
             assert_eq!(headers[header::LOCATION], location);
+            let query = "utm_source=newsletter&tag=a%2Fb&tag=c+ d".replace(' ', "%20");
+            let (status, headers, _) = request(&format!("{path}?{query}")).await;
+            assert_eq!(status, StatusCode::PERMANENT_REDIRECT);
+            assert_eq!(headers[header::LOCATION], format!("{location}?{query}"));
         }
     }
 
