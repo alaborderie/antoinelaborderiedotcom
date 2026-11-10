@@ -66,6 +66,7 @@ let a1 = true;
   console.log("5. you open the home page again (new tab, same browser)");
   const p2 = await ctx.newPage(); await p2.goto(url, { waitUntil: "load" });
   const s2 = await look(p2); const l2 = show(s2);
+  if (l2.some(x => x.startsWith("GET / ->"))) throw new Error("A1: second tab did not reuse cached HTML");
   if (s2.cssRelease !== '\"2\"' || s2.jsRelease !== "2") throw new Error("A1: cached HTML lost its own assets");
   const reused = s2.cssRelease === '"1"' && !l2.some((x) => x.includes("styles.css"));
   console.log(`   only release 2 live, the browser reuses the release-1 CSS kept under ?v=new (no CSS request reached a pod): ${reused}`);
