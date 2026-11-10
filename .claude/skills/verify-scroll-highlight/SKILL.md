@@ -74,8 +74,8 @@ C1 FIXED stage/HighlightNeverGoesBack: zones 3 -> 4 -> 5, highlight peaksys -> p
 C2 FIXED stage/HighlightIsOnScreen: zones 3 -> 4 -> 3, highlight peaksys -> peaksys -> peaksys
 C3 FIXED scene/HighlightIsOnScreen: zones 1 -> 2 -> 1, highlight capability -> capability -> capability
 off-site hosts the page tried: eu-assets.i.posthog.com; answered: none
-SAME    stage.cfg: breaks [  ] = known findings  (see run for state count)
-SAME    scene.cfg: breaks [  ] = known findings  (see run for state count)
+SAME    stage.cfg: breaks [  ] = known findings none (see run for state count)
+SAME    scene.cfg: breaks [  ] = known findings none (see run for state count)
 RESULT: EXPECTED; known findings none; fixed replays pass and every rule holds
 ```
 
@@ -114,15 +114,15 @@ git checkout -- static/main.js
 
 Expected: `MISMATCH scene observer options ...`, `MISMATCH scene zones: ...`, `C3 NOT RUN ...`, `CHANGED: MODEL OUT OF DATE ...`, `RESULT: CHANGED (model-out-of-date C3-replay); ...`, exit 1. The `git checkout` undoes it.
 
-A callback change the zones cannot see: highlight Expertise whenever the section callback picks the Project lab.
+Restore the original batch-only callbacks without changing any zones.
 
 ```sh
-sed -i 's/      const scene = activeSection.dataset.scene;/      const scene = activeSection.dataset.scene === "lab" ? "capability" : activeSection.dataset.scene;/' static/main.js
+git show 1023914:static/main.js > static/main.js
 .claude/skills/verify-scroll-highlight/check.sh; echo "exit=$?"
-git checkout -- static/main.js
+git restore -- static/main.js
 ```
 
-Expected: `MISMATCH scene callback: ... model allows lab`, `RESULT: CHANGED (model-out-of-date); ...`, exit 1.
+Expected: callback `MISMATCH` lines, all three fixed replays fail, `RESULT: CHANGED (model-out-of-date C1-replay C2-replay C3-replay)`, exit 1. TLC still holds on the fixed model, so the probe is what rejects the stale implementation. Only run these mutations with a clean `static/main.js` and restore it afterwards.
 
 ## Coverage and sync
 
