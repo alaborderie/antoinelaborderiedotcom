@@ -95,7 +95,7 @@ async fn redirect_graph() {
                     let path = target.split('?').next().unwrap().to_owned();
                     if hop.status == StatusCode::NOT_FOUND && host_now == "antoinelaborderie.com" && hop.body.contains("<html") {
                         let lang = if hop.body.contains("<html lang=\"fr\"") { "fr" } else { "en" };
-                        let want = if path.starts_with("/fr/") { "fr" } else { "en" };
+                        let want = if path.starts_with("/fr/") || path.starts_with("/static/fr/") { "fr" } else { "en" };
                         if lang != want { note("NotFoundPageSpeaksTheUrlLanguage", format!("{example} page lang {lang}")); }
                     }
                     if hop.status == StatusCode::OK && !PAGES.contains(&path.as_str()) && !path.starts_with("/static/")

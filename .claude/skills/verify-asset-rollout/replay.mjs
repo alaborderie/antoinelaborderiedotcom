@@ -41,7 +41,8 @@ const newContext = async () => {
   return ctx;
 };
 const look = (page) => page.evaluate(() => ({
-  pageLinks: document.querySelector("link[rel=stylesheet]").getAttribute("href"),
+  pageLinks: document.querySelector("link[rel=stylesheet]")?.getAttribute("href") ?? "inline",
+  jsRelease: window.__assetRelease,
   cssRelease: getComputedStyle(document.documentElement).getPropertyValue("--release").trim() || "none (no stylesheet applied)",
 }));
 const show = (s) => { console.log("   page:", JSON.stringify(s)); const l = log.splice(0); l.forEach((x) => console.log("   http:", x)); return l; };
@@ -55,19 +56,24 @@ let a1 = true;
   console.log("2. you open the home page   [Traefik picks pod B]"); plan.push({ kind: "html", port: B });
   console.log("3. the CSS request reaches the other release   [Traefik picks pod A]"); plan.push({ kind: "css", port: A });
   const p1 = await ctx.newPage(); await p1.goto(url, { waitUntil: "load" });
-  const s1 = await look(p1); show(s1);
+  const s1 = await look(p1); const l1 = show(s1);
+  if (s1.cssRelease !== '\"2\"' || s1.jsRelease !== "2" || l1.some(x => x.includes("styles.css")))
+    throw new Error("A1: new HTML must carry release-2 CSS and JS without an asset fetch");
+  plan.length = 0;
   a1 &&= s1.pageLinks.endsWith(`?v=${process.env.V2}`) && s1.cssRelease === '"1"';
   console.log(`   new page (?v=new) styled with release-1 CSS: ${a1}`);
   console.log("4. the old pod stops taking traffic"); live = [B];
   console.log("5. you open the home page again (new tab, same browser)");
   const p2 = await ctx.newPage(); await p2.goto(url, { waitUntil: "load" });
   const s2 = await look(p2); const l2 = show(s2);
+  if (l2.some(x => x.startsWith("GET / ->"))) throw new Error("A1: second tab did not reuse cached HTML");
+  if (s2.cssRelease !== '\"2\"' || s2.jsRelease !== "2") throw new Error("A1: cached HTML lost its own assets");
   const reused = s2.cssRelease === '"1"' && !l2.some((x) => x.includes("styles.css"));
   console.log(`   only release 2 live, the browser reuses the release-1 CSS kept under ?v=new (no CSS request reached a pod): ${reused}`);
   a1 &&= reused;
   await ctx.close();
 }
-console.log(`A1 ${a1 ? "REPRODUCED" : "NOT REPRODUCED"} on the real builds`);
+console.log("A1 FIXED on the real builds (matching CSS and JS, including cached HTML)");
 
 console.log("== A2 (cutover.cfg): PageMatchesItsCss with an instant switch");
 let a2;
@@ -78,12 +84,15 @@ let a2;
   console.log("2. traffic switches to the new pod");
   console.log("3. the CSS request reaches the other release   [pod B answers]"); plan.push({ kind: "css", port: B });
   const p = await ctx.newPage(); await p.goto(url, { waitUntil: "load" });
-  const s = await look(p); show(s);
+  const s = await look(p); const lines = show(s);
+  if (s.cssRelease !== '\"1\"' || s.jsRelease !== "1" || lines.some(x => x.includes("styles.css")))
+    throw new Error("A2: old HTML must retain release-1 CSS and JS across cutover");
+  plan.length = 0;
   a2 = s.pageLinks.endsWith(`?v=${process.env.V1}`) && s.cssRelease === '"2"';
   console.log(`   old page (?v=old) styled with release-2 CSS: ${a2}`);
   await ctx.close();
 }
-console.log(`A2 ${a2 ? "REPRODUCED" : "NOT REPRODUCED"} on the real builds`);
+console.log("A2 FIXED on the real builds (old HTML retains its CSS and JS)");
 console.log(`off-site hosts the page tried: ${[...offsite].sort().join(", ") || "none"}; answered: ${[...answered].sort().join(", ") || "none"}`);
 await browser.close();
 proxy.close();

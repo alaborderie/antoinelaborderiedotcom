@@ -10,7 +10,7 @@
 set -eu
 SKILL=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(git -C "$SKILL" rev-parse --show-toplevel)
-KNOWN_IDS="A1 A2"
+KNOWN_IDS="none"
 
 finish() { echo "RESULT: $1"; exit "$2"; }
 missing() { echo "TOOLING MISSING: $1"; finish "TOOLING MISSING ($1); known findings $KNOWN_IDS not checked" 2; }
@@ -62,12 +62,13 @@ up() { echo "$1" | tr a-z A-Z; }
 # 2. TLC on both configs.
 cp "$SKILL/AssetRollout.tla" "$WORK/"
 changed=
-for cfg in deploy-as-is:TRUE:A1:'NewLinkNeverHoldsOldCss PageMatchesItsCss' cutover:FALSE:A2:'PageMatchesItsCss'; do
+for cfg in deploy-as-is:TRUE:none:'' cutover:FALSE:none:''; do
   name=${cfg%%:*} rest=${cfg#*:}
   overlap=${rest%%:*} rest=${rest#*:}
   id=${rest%%:*} expected=${rest#*:}
   cat > "$WORK/$name.cfg" <<CFG
 CONSTANTS
+    InlineAssets = $(up "$(fact inline_assets)")
     Overlap = $overlap
     Bumped = $(up "$bumped")
     ServerChecksVersion = $(up "$(fact server_checks_version)")
@@ -108,12 +109,14 @@ P1=$1 P2=$2 PROXY=$3
 sed -i "s/TcpListener::bind(\"0.0.0.0:3000\")/TcpListener::bind(\"127.0.0.1:$P1\")/" "$WORK/src/src/main.rs"
 for r in 1 2; do
   [ $r = 1 ] || sed -i "s/127.0.0.1:$P1/127.0.0.1:$P2/; s/^const ASSET_VERSION: &str = \".*\";/const ASSET_VERSION: \&str = \"$V2\";/" "$WORK/src/src/main.rs"
+  printf '\n:root { --release: "%s"; }\n' "$r" >> "$WORK/src/static/styles.css"
+  printf '\nwindow.__assetRelease = "%s";\n' "$r" >> "$WORK/src/static/main.js"
   (cd "$WORK/src" && CARGO_TARGET_DIR="$WORK/target" cargo build --offline --quiet -j 2 > "$WORK/build$r.log" 2>&1) \
     || broke "cargo build of release $r failed, see $WORK/build$r.log"
   mkdir -p "$WORK/rel$r"
   cp "$WORK/target/debug/antoinelaborderiedotcom" "$WORK/rel$r/pod"
   cp -R "$WORK/src/static" "$WORK/rel$r/static"
-  printf '\n:root { --release: "%s"; }\n' "$r" >> "$WORK/rel$r/static/styles.css"
+
 done
 (cd "$WORK/rel1" && exec ./pod) > "$WORK/pod1.log" 2>&1 & PIDS="$PIDS $!"
 (cd "$WORK/rel2" && exec ./pod) > "$WORK/pod2.log" 2>&1 & PIDS="$PIDS $!"
@@ -127,9 +130,9 @@ V1=$V1 V2=$V2 node "$SKILL/replay.mjs" "$P1" "$P2" "$PROXY" > "$WORK/replay.log"
 cat "$WORK/replay.log"
 grep -q "; answered: none$" "$WORK/replay.log" || broke "an off-site request got an answer during the replay, see $WORK/replay.log"
 for id in A1 A2; do
-  grep -q "^$id REPRODUCED" "$WORK/replay.log" || { echo "CHANGED $id: the replay on the real builds no longer reproduces it"; changed="$changed $id-replay"; }
+  grep -q "^$id FIXED" "$WORK/replay.log" || { echo "CHANGED $id: the fixed behavior was not verified on the real builds"; changed="$changed $id-replay"; }
 done
 
 echo "work dir: $WORK"
-[ -z "$changed" ] && finish "EXPECTED; known findings $KNOWN_IDS still reproduce (TLC and replay) and every other rule holds" 0
+[ -z "$changed" ] && finish "EXPECTED; known findings $KNOWN_IDS; all rules hold (TLC and replay)" 0
 finish "CHANGED ($(echo $changed)); known findings are $KNOWN_IDS, read SKILL.md 'Read the result'" 1

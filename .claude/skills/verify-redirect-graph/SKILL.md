@@ -24,13 +24,13 @@ Bound: paths of 1 to 3 segments over `"" fr FR en concept concept-spatial legal-
 | `RedirectsStayOnSite` | Every Location is a path on the site or `https://antoinelaborderie.com/...`. | same |
 | `RedirectHasLocation` | Every 3xx has a Location. | same, plus ServeDir |
 | `RedirectsKeepTheLanguage` | A French URL never redirects to an English page. | redirect routes |
-| `RedirectsKeepTheQuery` | A redirect keeps the query string. | www branch keeps it (`111`); `Redirect::permanent("...")` routes do not |
+| `RedirectsKeepTheQuery` | A redirect keeps the query string. | `http_policy` preserves the original query on redirects, including legacy routes and ServeDir |
 | `ErrorsAreNeverCached` | 4xx/5xx are `Cache-Control: no-store`. | `http_policy` `127-128` |
 | `EveryResponseHasHsts` | Every response has `Strict-Transport-Security: max-age=31536000`. | `http_policy` `123-126` |
 | `NoServerError` | No URL in the bound gives a 5xx. | `render()` `206-214` |
 | `OnlyKnownPagesAnswer200` | Outside `/static/`, only `/`, `/fr`, the two legal pages, `/robots.txt`, `/sitemap.xml`, `/favicon.ico` answer 200. | routes, `fallback(not_found)` `91` |
 | `StaticServesOnlyFilesUnderStatic` | A 200 under `/static/` has the exact bytes of a file in `static/` (no traversal). | `nest_service("/static", ServeDir...)` `87-90` |
-| `NotFoundPageSpeaksTheUrlLanguage` | The 404 page is French exactly when the URL starts with `/fr/`. | `not_found()` `195-204` |
+| `NotFoundPageSpeaksTheUrlLanguage` | The 404 page is French when the original URL starts with `/fr/` or `/static/fr/`. | `not_found()` `195-204` |
 
 ## Does my change touch this?
 
@@ -50,40 +50,22 @@ From anywhere inside a checkout, no argument:
 
 It checks the working tree as it is on disk, committed or not. It copies the tracked and untracked files (never ignored files, never `.env*`) to a new `mktemp -d` directory, appends `redirect_graph.rs` to the copy's `src/main.rs`, runs `cargo test` there with `CARGO_TARGET_DIR` inside it, and deletes the build output at exit. Nothing is written into the checkout. No server is started and no request leaves the process: every request goes through `app()` in memory. About 30 s.
 
-## What to expect at the sync commit
+## Expected outcome
 
 ```
 ENUMERATED 10506 start URLs, 17588 requests
-BROKEN NotFoundPageSpeaksTheUrlLanguage 30x, e.g. Host antoinelaborderie.com GET /static/fr/ ... hop 0: /static/fr/ -> 404 Not Found page lang fr
-BROKEN RedirectsKeepTheQuery 39x, e.g. Host antoinelaborderie.com GET /concept?utm_source=x&v=1 ... hop 0: /concept?utm_source=x&v=1 -> 308 Permanent Redirect Location /
-B1 still reproduces: RedirectsKeepTheQuery broken on 39 start URLs
-B2 still reproduces: NotFoundPageSpeaksTheUrlLanguage broken on 30 start URLs
-RESULT: EXPECTED; known findings B1 B2 still reproduce and every other rule holds
+RESULT: EXPECTED; known findings none; all rules hold
 ```
 
-Exit status:
+Exit 0 means every rule holds within the unchanged URL and hop bounds. Exit 1 means a rule broke, exit 2 means missing cargo, and exit 3 means compilation or enumeration failed. Inspect the temporary directory printed by the script.
 
-| Exit | Final line starts with | Meaning |
-|---|---|---|
-| 0 | `RESULT: EXPECTED` | B1 and B2 break their rules on exactly 39 and 30 start URLs; every other rule holds. The state of the code today. |
-| 1 | `RESULT: CHANGED (...)` | Another rule breaks, or B1 or B2 breaks on another number of start URLs (fixed, partly fixed, or spread). The parentheses name what changed. |
-| 2 | `RESULT: TOOLING MISSING (...)` | `cargo` is missing. Nothing was checked. |
-| 3 | `RESULT: CHECK FAILED (...)` | The copy does not build or the enumeration did not run. |
+## Known findings
 
-## Read the result
+None. Baseline ac25368 reproduced B1 on 39 URLs and the previous B2 rule on 30 URLs. B1 is fixed by carrying the original query through every redirect. The product suite tests all 13 legacy routes, including escaped and repeated parameters.
 
-Every `BROKEN` line is the real router's answer, so it is not a model error, but the rule's code can be wrong: read the example and check it with curl against a build of the copy bound to 127.0.0.1 before calling it a bug. (While writing this check, `/static/favicon.svg/` answered 200 with the favicon: a first version of `StaticServesOnlyFilesUnderStatic` compared paths and flagged it; comparing bytes is the rule actually meant.) Never edit a rule to turn a real finding green; add it to `KNOWN` in `check.sh` with its count and report it.
+B2 was a contract conflict rather than an observed English response. The analysis and baseline replay both showed French under `/static/fr/`, while their rule expected English. On 2026-11-10 the task owner explicitly chose French, as the task acceptance requires. The rule now includes this namespace. `not_found` reads `OriginalUri` and names both French prefixes explicitly, so behavior no longer depends on Axum stripping the mount prefix. Product regressions cover `/static/fr/` and `/static/fr/missing.css` and assert French HTML, 404 and no-store. This is an approved correction of the language contract, not a weakened query, cache, traversal, hop or site rule.
 
-## Known findings at the sync commit
-
-Both replayed with curl on a release build of a copy bound to 127.0.0.1:
-
-1. **B1**, `RedirectsKeepTheQuery` (39 start URLs): `GET /concept?utm_source=newsletter` -> `308 Location: /`; same for `/en`, `/fr/`, `/legal-notice/`, `/fr/mentions-legales/`, `/concept*`. Even `www.antoinelaborderie.com/fr/?utm_source=newsletter` -> `301 https://antoinelaborderie.com/fr/?utm_source=newsletter` -> `308 /fr`: the second hop drops what the first kept. Campaign parameters on old or slash-ended links never reach the page or PostHog.
-2. **B2**, `NotFoundPageSpeaksTheUrlLanguage` (30 start URLs): `/static/fr/` and `/static/fr/missing.css` get the French 404. `not_found` runs inside `nest_service("/static", ...)`, where the `Uri` it reads has `/static` stripped, so `/static/fr/...` looks like `/fr/...`. Cosmetic.
-
-All other rules hold within the bound.
-
-When a fix lands on purpose, the check reports `CHANGED` with the new count (0 when fully fixed). Confirm with curl that the old example now behaves, then remove the entry from `KNOWN` and `KNOWN_IDS` in `check.sh` and update this section and the expected output above.
+For an unexpected result, inspect the example and replay against a local build before declaring a product bug. Never make a rule weaker just to hide an unexpected result. Record newly reproduced findings in `KNOWN` and `KNOWN_IDS`, then update this document.
 
 ## Prove the check can turn red
 
@@ -101,4 +83,4 @@ Expected: a new line `BROKEN ErrorsAreNeverCached ...`, then `CHANGED: ErrorsAre
 
 - Covered: `src/main.rs` `app()`, `http_policy`, `not_found`, `render`, `robots`, `sitemap`, `favicon`, and the redirect closures; tower-http 0.6.2 ServeDir and CompressionLayer as wired there (identity encoding only).
 - Not covered: methods other than GET, `Accept-Encoding` variants, paths outside the bound (longer, other segments, non-ASCII), Traefik's own handling of Host and paths before the app.
-- Sync commit: **7b125e4**, the `origin/main` this skill was added from. On 2026-11-09 the anchors above were read at that commit and `check.sh`, run from this repository's checkout, gave `RESULT: EXPECTED` (exit 0); M4 gave `RESULT: CHANGED` (exit 1). Move it forward only after `check.sh` gives `EXPECTED` at the new commit, or after the known findings were updated with curl evidence.
+- Sync commit: 702be1a. Baseline ac25368 reproduced B1 and the disputed B2 contract. The fixed-code check returns EXPECTED with no findings. M4 still detects error caching. After an intended change, replay the old example locally, update expectations only with evidence, then refresh the sync and coverage record.

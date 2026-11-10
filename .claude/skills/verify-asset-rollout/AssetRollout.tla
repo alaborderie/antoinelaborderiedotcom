@@ -7,7 +7,9 @@
 (* handler answers it), ONE cache expiry in the browser, or ONE change of  *)
 (* which pods Traefik sends traffic to.                                    *)
 (*                                                                         *)
-(* Code facts at repo commit 7b125e4 (src/main.rs):                        *)
+(* Legacy external-asset behavior remains modeled for mutation checks. *)
+(* Current code embeds CSS/JS in HTML; InlineAssets is probed from app(). *)
+(* Code facts before the inline fix (src/main.rs):                        *)
 (*  - english()/french() render index.html, which links                    *)
 (*    /static/styles.css?v={ASSET_VERSION} (templates/index.html:21,54).    *)
 (*  - nest_service("/static", ServeDir::new("static")) serves the file on  *)
@@ -24,6 +26,7 @@ EXTENDS Naturals
 CONSTANTS
     Overlap,             \* TRUE: old and new pod both receive traffic during the rollout
     Bumped,              \* TRUE: release 2 changes ASSET_VERSION (main.rs:16)
+    InlineAssets,        \* TRUE: the HTML response carries its own CSS and JS
     ServerChecksVersion  \* TRUE: a /static request whose ?v= is not this pod's ASSET_VERSION gets 404 no-store
 
 Releases == {1, 2}
@@ -72,12 +75,12 @@ InstantSwitch ==          \* the best case: no moment with both pods
 (* ---- the visitor's browser (RFC 9111 private cache keyed by full URL) ---- *)
 YouOpenPageFromCache ==   \* GET / answered by the browser cache (< 300 s old)
     /\ htmlCache # None
-    /\ page' = htmlCache /\ styled' = Waiting
+    /\ page' = htmlCache /\ styled' = IF InlineAssets THEN htmlCache ELSE Waiting
     /\ UNCHANGED <<live, htmlCache, cssCache>>
 YouOpenPageFromServer ==  \* GET / answered by one live pod: english() at that pod's release
     /\ htmlCache = None
     /\ \E r \in live : page' = r /\ htmlCache' = r
-    /\ styled' = Waiting
+                      /\ styled' = IF InlineAssets THEN r ELSE Waiting
     /\ UNCHANGED <<live, cssCache>>
 CssFromCache ==           \* GET /static/styles.css?v=Key(page) answered by the browser cache
     /\ page # None /\ styled = Waiting
