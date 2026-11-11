@@ -11,7 +11,7 @@ description: Exhaustively check, up to a bound, every URL a visitor or crawler c
 
 ## Why not TLA+ here
 
-The router keeps no state between requests (`app()`, `http_policy` in `src/main.rs:47-140`), so nothing interleaves; the question is whether the code behaves for every input. So the check runs on the code itself: `redirect_graph.rs`, a test appended to a copy of `src/main.rs`, sends 17,588 requests through the real `app()` (http_policy, CompressionLayer, routes, ServeDir, fallback) with `tower::ServiceExt::oneshot` and follows each redirect.
+The router keeps no state between requests (`app()`, `http_policy` in `src/main.rs:49-154`), so nothing interleaves; the question is whether the code behaves for every input. So the check runs on the code itself: `redirect_graph.rs`, a test appended to a copy of `src/main.rs`, sends 17,588 requests through the real `app()` (http_policy, CompressionLayer, routes, ServeDir, fallback) with `tower::ServiceExt::oneshot` and follows each redirect.
 
 Bound: paths of 1 to 3 segments over `"" fr FR en concept concept-spatial legal-notice mentions-legales static styles.css favicon.svg x .. %2e%2e %2F src main.rs` (third segment from `"" fr styles.css x ..`), with and without `?utm_source=x&v=1`, for Host `antoinelaborderie.com`, `www.antoinelaborderie.com`, `WWW.antoinelaborderie.com:443`; method GET; up to 4 hops. 10,506 start URLs.
 
@@ -19,18 +19,18 @@ Bound: paths of 1 to 3 segments over `"" fr FR en concept concept-spatial legal-
 
 | Rule | Reader's sentence | Code |
 |---|---|---|
-| `NoRedirectLoop` | Following redirects never comes back to a URL already visited. | `app()` redirect routes `src/main.rs:53-83`, www branch `108-117` |
+| `NoRedirectLoop` | Following redirects never comes back to a URL already visited. | `app()` redirect routes `src/main.rs:55-85`, www branch `111-123` |
 | `AtMostTwoRedirects` | Any URL lands within two redirects. | same |
 | `RedirectsStayOnSite` | Every Location is a path on the site or `https://antoinelaborderie.com/...`. | same |
 | `RedirectHasLocation` | Every 3xx has a Location. | same, plus ServeDir |
 | `RedirectsKeepTheLanguage` | A French URL never redirects to an English page. | redirect routes |
 | `RedirectsKeepTheQuery` | A redirect keeps the query string. | `http_policy` preserves the original query on redirects, including legacy routes and ServeDir |
-| `ErrorsAreNeverCached` | 4xx/5xx are `Cache-Control: no-store`. | `http_policy` `127-128` |
-| `EveryResponseHasHsts` | Every response has `Strict-Transport-Security: max-age=31536000`. | `http_policy` `123-126` |
-| `NoServerError` | No URL in the bound gives a 5xx. | `render()` `206-214` |
-| `OnlyKnownPagesAnswer200` | Outside `/static/`, only `/`, `/fr`, the two legal pages, `/robots.txt`, `/sitemap.xml`, `/favicon.ico` answer 200. | routes, `fallback(not_found)` `91` |
-| `StaticServesOnlyFilesUnderStatic` | A 200 under `/static/` has the exact bytes of a file in `static/` (no traversal). | `nest_service("/static", ServeDir...)` `87-90` |
-| `NotFoundPageSpeaksTheUrlLanguage` | The 404 page is French when the original URL starts with `/fr/` or `/static/fr/`. | `not_found()` `195-204` |
+| `ErrorsAreNeverCached` | 4xx/5xx are `Cache-Control: no-store`. | `http_policy` `142-143` |
+| `EveryResponseHasHsts` | Every response has `Strict-Transport-Security: max-age=31536000`. | `http_policy` `138-141` |
+| `NoServerError` | No URL in the bound gives a 5xx. | `render()` `225-232` |
+| `OnlyKnownPagesAnswer200` | Outside `/static/`, only `/`, `/fr`, the two legal pages, `/robots.txt`, `/sitemap.xml`, `/favicon.ico` answer 200. | routes, `fallback(not_found)` `93` |
+| `StaticServesOnlyFilesUnderStatic` | A 200 under `/static/` has the exact bytes of a file in `static/` (no traversal). | `nest_service("/static", ServeDir...)` `89-92` |
+| `NotFoundPageSpeaksTheUrlLanguage` | The 404 page is French when the original URL starts with `/fr/` or `/static/fr/`. | `not_found()` `214-222` |
 
 ## Does my change touch this?
 
@@ -83,4 +83,4 @@ Expected: a new line `BROKEN ErrorsAreNeverCached ...`, then `CHANGED: ErrorsAre
 
 - Covered: `src/main.rs` `app()`, `http_policy`, `not_found`, `render`, `robots`, `sitemap`, `favicon`, and the redirect closures; tower-http 0.6.2 ServeDir and CompressionLayer as wired there (identity encoding only).
 - Not covered: methods other than GET, `Accept-Encoding` variants, paths outside the bound (longer, other segments, non-ASCII), Traefik's own handling of Host and paths before the app.
-- Sync commit: 702be1a. Baseline ac25368 reproduced B1 and the disputed B2 contract. The fixed-code check returns EXPECTED with no findings. M4 still detects error caching. After an intended change, replay the old example locally, update expectations only with evidence, then refresh the sync and coverage record.
+- Sync commit: 3a01624 (re-run green on 2026-11-11; the check was first synchronized at 702be1a). Baseline ac25368 reproduced B1 and the disputed B2 contract. The fixed-code check returns EXPECTED with no findings. M4 still detects error caching. After an intended change, replay the old example locally, update expectations only with evidence, then refresh the sync and coverage record.
