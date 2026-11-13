@@ -4,7 +4,7 @@ description: >
   Architecture and editing context for Antoine Laborderie's bilingual portfolio (antoinelaborderie.com). Use when updating its content, fixing the Rust/Axum/Askama application, or preparing its deployment.
 metadata:
   author: alaborderie
-  version: 1.1.1
+  version: 1.1.2
 ---
 
 # antoinelaborderiedotcom — Personal Portfolio
@@ -117,7 +117,10 @@ cargo fmt -- --check
 cargo clippy -- -D warnings
 cargo test
 cargo build --release
+npm test
 ```
+
+To prove a change in the running site, use the `verify-antoinelaborderiedotcom` skill. Its `features/` directory maps every user-facing feature to the journey that proves it.
 
 Template edits need a rebuild. Askama fails the build when a template does not compile.
 
@@ -131,11 +134,12 @@ On every pull request and on every push to `main`:
 2. `fmt` — `cargo fmt -- --check`
 3. `clippy` — `cargo clippy -- -D warnings`
 4. `test` — `cargo test`
+5. `browser` — `npm ci`, the Chromium headless shell, then `npm test`
 
-On `main` only, after those four jobs:
+On `main` only, after those five jobs:
 
-5. `deploy` builds `Dockerfile` and pushes `ghcr.io/alaborderie/antoinelaborderiedotcom:latest` (GHCR login uses `secrets.PAT_TOKEN`)
-6. `rollout` SSHes to the VPS and runs `sudo kubectl rollout restart deployment landing-website`
+6. `deploy` builds `Dockerfile` and pushes `ghcr.io/alaborderie/antoinelaborderiedotcom:latest` (GHCR login uses `secrets.PAT_TOKEN`)
+7. `rollout` SSHes to the VPS and runs `sudo kubectl rollout restart deployment landing-website`
 
 The Kubernetes manifest lives outside this repository. The workflow publishes the image and restarts `deployment/landing-website`. The legal notice names OVH SAS as the host.
 
